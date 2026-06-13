@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operação Fibra — Simulador do Técnico de Provedor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;600;700&display=swap');
+
+:root{
+  --paper:#eef2f4;        /* papel técnico azulado */
+  --card:#ffffff;
+  --ink:#15303d;          /* tinta de manual */
+  --ink-soft:#4d6a78;
+  --fiber:#f2b705;        /* capa amarela da fibra monomodo */
+  --apc:#1f9d55;          /* verde SC/APC */
+  --upc:#2a6fdb;          /* azul SC/UPC */
+  --alarm:#d64545;        /* LOS */
+  --grid:#d8e1e6;
+  --term-bg:#0e1f28;
+  --term-green:#7ce38b;
+  --term-dim:#5d7a86;
+  --radius:14px;
+  --shadow:0 2px 0 rgba(21,48,61,.12), 0 10px 24px -14px rgba(21,48,61,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;color:var(--ink);
+  background:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+  min-height:100vh;padding-bottom:80px;
+}
+h1,h2,h3,.disp{font-family:'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ---------- topo ---------- */
+header{
+  position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;
+  padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  box-shadow:0 4px 18px -6px rgba(21,48,61,.5);
+}
+header .logo{font-family:'Saira Condensed';font-weight:800;font-size:1.35rem;line-height:1;text-transform:uppercase}
+header .logo small{display:block;font-size:.62rem;letter-spacing:.22em;color:var(--fiber);font-weight:600}
+.hud{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.xp-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 14px;font-size:.85rem;font-weight:700}
+.xp-pill b{color:var(--fiber)}
+.badges-mini{display:flex;gap:5px}
+.badge-dot{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:.8rem;filter:grayscale(1);opacity:.45;transition:.3s}
+.badge-dot.won{filter:none;opacity:1;background:var(--fiber);border-color:var(--fiber);transform:scale(1.08)}
+
+/* fibra animada do header */
+.fiber-strip{height:5px;background:var(--fiber);position:relative;overflow:hidden}
+.fiber-strip::after{content:'';position:absolute;top:0;left:-15%;width:15%;height:100%;
+  background:linear-gradient(90deg,transparent,#fff,transparent);animation:pulse 2.6s linear infinite}
+@keyframes pulse{to{left:115%}}
+
+main{max-width:1020px;margin:0 auto;padding:22px 16px}
+.screen{display:none;animation:fadein .35s ease}
+.screen.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- mapa ---------- */
+.intro-card{background:var(--card);border:2px solid var(--ink);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);margin-bottom:24px}
+.intro-card h1{font-size:clamp(1.6rem,4.5vw,2.4rem)}
+.intro-card p{color:var(--ink-soft);margin-top:8px;max-width:62ch}
+.os-tag{display:inline-block;background:var(--fiber);color:var(--ink);font-weight:700;font-size:.72rem;padding:3px 10px;border-radius:4px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+
+.route{position:relative;margin:8px 0 0}
+.route::before{content:'';position:absolute;left:23px;top:10px;bottom:10px;width:5px;background:var(--fiber);border-radius:3px}
+.route::after{content:'';position:absolute;left:23px;top:10px;width:5px;height:26px;border-radius:3px;
+  background:linear-gradient(#fff,transparent);animation:drop 3s linear infinite}
+@keyframes drop{from{top:10px;opacity:1}to{top:calc(100% - 36px);opacity:.2}}
+.mcard{position:relative;margin:0 0 14px 56px;background:var(--card);border:2px solid var(--ink);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;transition:.2s}
+.mcard:hover:not(.locked){transform:translateX(4px)}
+.mcard::before{content:attr(data-icon);position:absolute;left:-46px;top:14px;width:36px;height:36px;border-radius:50%;
+  background:var(--ink);color:#fff;display:grid;place-items:center;font-size:1rem;border:3px solid var(--paper)}
+.mcard h3{font-size:1.15rem}
+.mcard p{font-size:.86rem;color:var(--ink-soft);margin-top:3px}
+.mcard .mstatus{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:8px;display:inline-block;padding:2px 10px;border-radius:4px}
+.mcard.done .mstatus{background:#def3e6;color:var(--apc)}
+.mcard.open .mstatus{background:#fdf0cb;color:#8a6a00}
+.mcard.locked{opacity:.55;cursor:not-allowed}
+.mcard.locked .mstatus{background:#e6ebee;color:var(--ink-soft)}
+.mcard.done::before{background:var(--apc);content:'✓'}
+
+/* ---------- componentes ---------- */
+.panel{background:var(--card);border:2px solid var(--ink);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+.panel h2{font-size:clamp(1.3rem,3.5vw,1.8rem);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step-eyebrow{font-size:.7rem;letter-spacing:.2em;font-weight:700;color:var(--ink-soft);text-transform:uppercase;margin-bottom:4px}
+.panel>p{color:var(--ink-soft);margin-top:6px}
+.btn{font-family:'Saira Condensed';font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:1rem;cursor:pointer;transition:.15s;box-shadow:0 3px 0 rgba(21,48,61,.35)}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px);box-shadow:none}
+.btn.gold{background:var(--fiber);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink);box-shadow:none}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.backrow{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+
+.choices{display:grid;gap:10px;margin-top:14px}
+.choice{background:#f5f8f9;border:2px solid var(--grid);border-radius:10px;padding:13px 15px;text-align:left;cursor:pointer;font-size:.93rem;font-family:inherit;color:var(--ink);transition:.15s;line-height:1.45}
+.choice:hover{border-color:var(--ink)}
+.choice.right{background:#def3e6;border-color:var(--apc)}
+.choice.wrong{background:#fbe3e3;border-color:var(--alarm);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.feedback{margin-top:12px;padding:13px 15px;border-radius:10px;font-size:.9rem;display:none;line-height:1.5}
+.feedback.show{display:block;animation:fadein .3s}
+.feedback.ok{background:#def3e6;border-left:5px solid var(--apc)}
+.feedback.bad{background:#fbe3e3;border-left:5px solid var(--alarm)}
+.feedback.info{background:#e7eefc;border-left:5px solid var(--upc)}
+.kfact{background:#fffbe8;border:1.5px dashed var(--fiber);border-radius:10px;padding:12px 15px;font-size:.86rem;margin-top:14px;line-height:1.5}
+.kfact b{color:#8a6a00}
+.kfact .src{display:block;font-size:.72rem;color:var(--ink-soft);margin-top:6px;font-style:italic}
+
+.xp-float{position:fixed;z-index:200;font-family:'Saira Condensed';font-weight:800;font-size:1.4rem;color:var(--apc);pointer-events:none;animation:xpfly 1.1s ease forwards;text-shadow:0 1px 0 #fff}
+@keyframes xpfly{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-60px)}}
+
+/* ---------- ONT ---------- */
+.ont-box{background:#fafdff;border:2px solid var(--ink);border-radius:12px;padding:16px;margin-top:14px}
+.ont-svgwrap{max-width:560px;margin:0 auto}
+.led{transition:fill .4s}
+.led.blink{animation:blinkled 1s steps(2) infinite}
+@keyframes blinkled{50%{opacity:.15}}
+.leds-legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:.8rem}
+.leds-legend span{display:flex;align-items:center;gap:6px}
+.leds-legend i{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.2)}
+
+.meter{background:var(--term-bg);border-radius:12px;padding:18px;text-align:center;color:#fff;max-width:340px;margin:14px auto 0}
+.meter .lbl{font-size:.7rem;letter-spacing:.18em;color:var(--term-dim);text-transform:uppercase}
+.meter .val{font-family:'IBM Plex Mono';font-size:2.4rem;font-weight:600;margin:4px 0}
+.meter .scale{height:10px;border-radius:6px;margin-top:10px;position:relative;
+  background:linear-gradient(90deg,var(--alarm) 0 22%,#e8a13a 22% 38%,var(--apc) 38% 100%)}
+.meter .needle{position:absolute;top:-5px;width:4px;height:20px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff;transition:left 1s ease}
+.meter .ticks{display:flex;justify-content:space-between;font-size:.62rem;color:var(--term-dim);margin-top:5px;font-family:'IBM Plex Mono'}
+
+.connect-stage{position:relative;margin-top:14px}
+.cto-svg .port{cursor:pointer}
+.cto-svg .port:hover rect{stroke-width:3}
+.hint-tag{display:inline-block;background:var(--ink);color:#fff;font-size:.72rem;padding:3px 10px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-top:10px}
+
+/* ---------- terminal ---------- */
+.terminal{background:var(--term-bg);border-radius:12px;padding:16px;margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:.83rem;color:#cfe3ea;min-height:240px;max-height:380px;overflow-y:auto;line-height:1.6;border:2px solid var(--ink)}
+.terminal .out{white-space:pre-wrap;word-break:break-word}
+.terminal .cmdline{color:var(--term-green)}
+.terminal .sys{color:var(--term-dim)}
+.terminal .hl{color:var(--fiber);font-weight:600}
+.cmdbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cmdchip{font-family:'IBM Plex Mono';font-size:.78rem;background:#1b3440;color:var(--term-green);border:1px solid #2e5160;border-radius:8px;padding:8px 12px;cursor:pointer;transition:.15s}
+.cmdchip:hover{background:#24465605;border-color:var(--term-green);background:#234654}
+.cmdchip:disabled{opacity:.35;cursor:not-allowed}
+.contract{background:#fffbe8;border:2px solid var(--fiber);border-radius:10px;padding:14px;font-size:.86rem;margin-top:12px}
+.contract h4{font-family:'Saira Condensed';text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.contract table{width:100%;border-collapse:collapse}
+.contract td{padding:3px 0;border-bottom:1px dotted #e3d191}
+.contract td:last-child{text-align:right;font-weight:700;font-family:'IBM Plex Mono';font-size:.8rem}
+
+/* ---------- switch ---------- */
+.switch-wrap{margin-top:14px}
+.vlan-palette{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.vtag{font-family:'IBM Plex Mono';font-weight:600;font-size:.8rem;padding:9px 14px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:.15s;color:#fff}
+.vtag[data-v="10"]{background:var(--upc)}
+.vtag[data-v="20"]{background:#8e44ad}
+.vtag[data-v="trunk"]{background:var(--ink)}
+.vtag.sel{outline:3px solid var(--fiber);transform:scale(1.06)}
+.sw-ports{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;background:var(--ink);padding:14px;border-radius:12px;max-width:640px}
+.sw-port{aspect-ratio:1/1.15;background:#21424f;border:2px dashed #4d6a78;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.15s;color:#9fb8c2;font-size:.66rem;font-family:'IBM Plex Mono'}
+.sw-port:hover{border-color:var(--fiber)}
+.sw-port .pn{font-weight:600;font-size:.78rem;color:#fff}
+.sw-port.v10{background:var(--upc);border-style:solid;border-color:#fff3;color:#fff}
+.sw-port.v20{background:#8e44ad;border-style:solid;border-color:#fff3;color:#fff}
+.sw-port.vtrunk{background:var(--fiber);border-style:solid;border-color:#fff3;color:var(--ink)}
+.sw-port.flash{animation:flashp .5s 3}
+@keyframes flashp{50%{box-shadow:0 0 0 5px rgba(242,183,5,.55)}}
+.sw-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-soft);margin-top:10px}
+.deskrow{display:flex;gap:8px;max-width:640px;margin-top:6px;font-size:.68rem;text-align:center;color:var(--ink-soft)}
+.deskrow span{flex:1}
+
+/* ---------- speedtest ---------- */
+.gauge-wrap{text-align:center;margin-top:14px}
+.gauge-val{font-family:'IBM Plex Mono';font-size:2.6rem;font-weight:600}
+.gauge-val small{font-size:1rem;color:var(--ink-soft)}
+.testopts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:12px}
+.topt{background:#f5f8f9;border:2px solid var(--grid);border-radius:10px;padding:13px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit;color:var(--ink)}
+.topt:hover{border-color:var(--ink)}
+.topt.sel{border-color:var(--fiber);background:#fffbe8}
+.topt .ico{font-size:1.5rem}
+.topt b{display:block;margin-top:4px;font-size:.88rem}
+.topt small{color:var(--ink-soft);font-size:.72rem}
+.result-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.85rem}
+.result-table td,.result-table th{padding:8px 10px;border-bottom:1px solid var(--grid);text-align:left}
+.result-table td:last-child{font-family:'IBM Plex Mono';font-weight:600;text-align:right}
+
+/* ---------- OSI ---------- */
+.osi-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:640px){.osi-cols{grid-template-columns:1fr}}
+.layer-stack{display:flex;flex-direction:column;gap:6px}
+.layer{border-radius:8px;padding:10px 14px;color:#fff;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;border:2px solid transparent;transition:.2s}
+.layer small{font-weight:400;opacity:.85;font-size:.7rem}
+.layer.drop-ok{outline:3px dashed var(--fiber)}
+.encap-stage{background:#fafdff;border:2px solid var(--ink);border-radius:12px;padding:18px;margin-top:14px;overflow:hidden}
+.pdu{display:flex;justify-content:center;margin:14px 0;min-height:54px;align-items:center;flex-wrap:wrap;gap:0}
+.hdr{padding:11px 12px;font-family:'IBM Plex Mono';font-size:.72rem;font-weight:600;color:#fff;border:2px solid #fff;animation:popin .4s ease}
+@keyframes popin{from{transform:scale(.4);opacity:0}}
+.encap-caption{text-align:center;font-size:.86rem;color:var(--ink-soft);min-height:44px}
+.encap-caption b{color:var(--ink)}
+.dragitems{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.ditem{font-family:'IBM Plex Mono';font-size:.78rem;background:#fff;border:2px solid var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer;transition:.15s}
+.ditem.sel{background:var(--fiber);transform:scale(1.05)}
+.ditem.placed{opacity:0;pointer-events:none;position:absolute}
+.tcp-targets .layer{cursor:pointer;min-height:56px;flex-wrap:wrap;gap:6px}
+.tcp-targets .placedlist{display:flex;gap:5px;flex-wrap:wrap}
+.tcp-targets .placedlist span{background:rgba(255,255,255,.25);border-radius:5px;padding:2px 8px;font-size:.68rem;font-family:'IBM Plex Mono'}
+
+/* ---------- plantão ---------- */
+.ticket{background:#fff;border:2px solid var(--ink);border-left:10px solid var(--alarm);border-radius:10px;padding:16px;margin-top:14px}
+.ticket .tnum{font-family:'IBM Plex Mono';font-size:.72rem;color:var(--ink-soft)}
+.ticket h4{font-size:1.05rem;margin-top:4px}
+.ledrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.78rem}
+.ledrow span{display:flex;align-items:center;gap:6px;background:#f5f8f9;padding:5px 10px;border-radius:6px;font-family:'IBM Plex Mono'}
+.ledrow i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.ledrow i.on-g{background:var(--apc);box-shadow:0 0 6px var(--apc)}
+.ledrow i.on-r{background:var(--alarm);box-shadow:0 0 6px var(--alarm);animation:blinkled 1s steps(2) infinite}
+.ledrow i.blinky{background:var(--apc);animation:blinkled .8s steps(2) infinite}
+.ledrow i.off{background:#cfd9de}
+.scorebar{display:flex;gap:6px;margin-top:12px}
+.scorebar i{flex:1;height:8px;border-radius:4px;background:var(--grid)}
+.scorebar i.hit{background:var(--apc)}
+.scorebar i.miss{background:var(--alarm)}
+
+/* ---------- certificado ---------- */
+.cert{background:#fff;border:3px double var(--ink);border-radius:var(--radius);padding:30px;text-align:center;box-shadow:var(--shadow)}
+.cert .seal{width:84px;height:84px;border-radius:50%;background:var(--fiber);display:grid;place-items:center;margin:0 auto 14px;font-size:2.2rem;border:4px solid var(--ink)}
+.cert h2{font-size:2rem}
+.cert .name{font-family:'IBM Plex Mono';margin:10px 0;color:var(--ink-soft)}
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:18px}
+.badge-card{border:2px solid var(--grid);border-radius:10px;padding:14px;font-size:.78rem}
+.badge-card.won{border-color:var(--fiber);background:#fffbe8}
+.badge-card .bi{font-size:1.6rem}
+.badge-card b{display:block;margin-top:4px}
+
+/* ---------- prova de certificação ---------- */
+.exam-intro{background:var(--ink);color:#fff;border-radius:var(--radius);padding:22px;margin-top:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.exam-intro::after{content:'🎓';position:absolute;right:14px;bottom:-14px;font-size:5.5rem;opacity:.14}
+.exam-intro h2{color:var(--fiber)}
+.exam-intro p{color:#cfe3ea;font-size:.9rem;margin-top:6px;max-width:60ch}
+.exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:16px}
+.modcard{background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:14px;cursor:pointer;transition:.15s;position:relative}
+.modcard:hover{transform:translateY(-2px)}
+.modcard .meyebrow{font-size:.64rem;letter-spacing:.16em;font-weight:700;color:var(--ink-soft);text-transform:uppercase}
+.modcard h4{font-family:'Saira Condensed';font-size:1.02rem;text-transform:uppercase;margin-top:3px;line-height:1.2}
+.modcard .mtopics{font-size:.72rem;color:var(--ink-soft);margin-top:5px;line-height:1.4}
+.modcard .mscore{margin-top:9px;font-size:.72rem;font-weight:700;display:inline-block;padding:2px 9px;border-radius:4px;background:#e6ebee;color:var(--ink-soft)}
+.modcard.aprovado{border-color:var(--apc)}
+.modcard.aprovado .mscore{background:#def3e6;color:var(--apc)}
+.modcard.reprovado .mscore{background:#fdf0cb;color:#8a6a00}
+.modcard.aprovado::after{content:'✓';position:absolute;top:-10px;right:-10px;width:28px;height:28px;border-radius:50%;background:var(--apc);color:#fff;display:grid;place-items:center;font-weight:700;border:3px solid var(--paper)}
+.qmeta{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--ink-soft);font-family:'IBM Plex Mono'}
+.qbar{height:8px;background:var(--grid);border-radius:4px;margin:8px 0 16px;overflow:hidden}
+.qbar i{display:block;height:100%;background:var(--fiber);border-radius:4px;transition:width .4s}
+.qtext{font-size:1.02rem;font-weight:600;line-height:1.5}
+.qtype-tag{display:inline-block;font-size:.64rem;letter-spacing:.14em;font-weight:700;text-transform:uppercase;background:#e7eefc;color:var(--upc);padding:2px 9px;border-radius:4px;margin-bottom:8px}
+.numrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.numrow input{font-family:'IBM Plex Mono';font-size:1.1rem;padding:10px 14px;border:2px solid var(--ink);border-radius:10px;width:160px;background:#fff;color:var(--ink)}
+.numrow .unit{font-family:'IBM Plex Mono';font-weight:600}
+.order-pool,.order-answer{display:flex;flex-wrap:wrap;gap:8px;min-height:46px;margin-top:10px;padding:10px;border-radius:10px}
+.order-pool{background:#f5f8f9;border:2px dashed var(--grid)}
+.order-answer{background:#fffbe8;border:2px solid var(--fiber)}
+.order-answer:empty::before{content:'Toque nos itens abaixo na ordem correta…';font-size:.78rem;color:var(--ink-soft)}
+.ochip{font-size:.8rem;background:#fff;border:2px solid var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer;transition:.12s;font-family:inherit;color:var(--ink)}
+.order-answer .ochip{background:var(--ink);color:#fff;cursor:default}
+.order-answer .ochip::before{content:counter(oc) '. ';counter-increment:oc;color:var(--fiber);font-weight:700}
+.order-answer{counter-reset:oc}
+.exam-result{text-align:center;padding:24px 10px}
+.exam-result .big{font-family:'Saira Condensed';font-size:3rem;font-weight:800}
+.gauge-ring{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;margin:10px auto;font-family:'Saira Condensed';font-weight:800;font-size:1.7rem;color:#fff}
+.progress-steps{display:flex;gap:5px;margin:14px 0 6px}
+.progress-steps i{flex:1;height:7px;border-radius:4px;background:var(--grid);transition:.3s}
+.progress-steps i.cur{background:var(--fiber)}
+.progress-steps i.done{background:var(--apc)}
+footer{text-align:center;font-size:.74rem;color:var(--ink-soft);margin-top:30px;padding:0 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">⚡ Operação Fibra<small>Simulador do técnico de provedor</small></div>
+  <div class="hud">
+    <div class="badges-mini" id="badgesMini"></div>
+    <div class="xp-pill">XP <b id="xpVal">0</b></div>
+  </div>
+</header>
+<div class="fiber-strip"></div>
+
+<main>
+
+<!-- =================== MAPA =================== -->
+<section class="screen active" id="scr-map">
+  <div class="intro-card">
+    <span class="os-tag">Ordem de Serviço Nº 4512</span>
+    <h1>Hoje você é o técnico do provedor</h1>
+    <p>Um cliente novo contratou o plano <b>500 Mega</b>. Sua jornada vai da casa do cliente até o núcleo da rede: instalar a ONT, autorizar na OLT, configurar VLANs no switch, validar a banda e dominar as camadas que explicam tudo isso. Cada missão segue a luz na fibra. 🔦</p>
+  </div>
+  <div class="route" id="routeList"></div>
+
+  <div class="exam-intro">
+    <span class="os-tag">Modo prova</span>
+    <h2>🎓 Certificação do Manual de Redes</h2>
+    <p>14 módulos cobrindo <b>todas as partes do manual</b> — dos fundamentos e fibra ao BGP, DDoS, MPLS, IPv6, Wi-Fi, VoIP e troubleshooting. Questões de múltipla escolha, V/F, <b>cálculos reais</b> (orçamento de potência, sub-redes, FSPL, Fresnel) e ordenação. Aprovação: <b>70%</b> por módulo.</p>
+    <button class="btn gold" style="margin-top:14px" onclick="openExam()">Abrir os 14 módulos →</button>
+  </div>
+</section>
+
+<!-- =================== PROVA: MÓDULOS =================== -->
+<section class="screen" id="scr-exam">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Prova de certificação</div>
+    <h2>🎓 Módulos do manual</h2>
+    <p>Faça em qualquer ordem. Cada questão vale 1 ponto e tem uma única tentativa — leia com calma. Aprove os 14 módulos para receber o selo de <b>Certificação Completa</b>.</p>
+    <div id="examOverall" style="margin-top:10px"></div>
+    <div class="exam-grid" id="examGrid"></div>
+  </div>
+</section>
+
+<!-- =================== PROVA: QUIZ =================== -->
+<section class="screen" id="scr-quiz">
+  <div class="backrow"><button class="btn ghost" onclick="openExam()">← Módulos</button></div>
+  <div class="panel">
+    <div class="step-eyebrow" id="quizEyebrow">Módulo</div>
+    <h2 id="quizTitle">—</h2>
+    <div class="qmeta"><span id="qCount">Questão 1/8</span><span id="qScore">0 acertos</span></div>
+    <div class="qbar"><i id="qBarFill" style="width:0%"></i></div>
+    <div id="quizStage"></div>
+  </div>
+</section>
+
+<!-- =================== M1: INSTALAÇÃO =================== -->
+<section class="screen" id="scr-m1">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão 1 · Casa do cliente</div>
+    <h2>🏠 Instalação da ONT com drop</h2>
+    <p>O drop óptico já desce do poste até a fachada. Falta a parte que separa um técnico de um <i>mestre</i>: conectar certo, ler os LEDs e medir a potência.</p>
+    <div class="progress-steps" id="m1prog"></div>
+    <div id="m1stage"></div>
+  </div>
+</section>
+
+<!-- =================== M2: OLT =================== -->
+<section class="screen" id="scr-m2">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão 2 · Central do provedor</div>
+    <h2>🖥️ Provisionamento na OLT</h2>
+    <p>A ONT está plugada e o LED PON <b>pisca</b>: a OLT detectou o equipamento, mas ninguém autorizou. Hora de abrir o terminal e dar vida ao serviço.</p>
+    <div class="contract">
+      <h4>📋 Contrato do cliente</h4>
+      <table>
+        <tr><td>Cliente</td><td>MARIA OLIVEIRA</td></tr>
+        <tr><td>Plano contratado</td><td>500 MEGA</td></tr>
+        <tr><td>SN da ONT instalada</td><td id="ctSN">HWTC-A1B2C3D4</td></tr>
+        <tr><td>Porta PON</td><td>0/1/2</td></tr>
+        <tr><td>C-VLAN do cliente</td><td>1101</td></tr>
+      </table>
+    </div>
+    <div class="terminal" id="term"><div class="out sys">OLT-CENTRO&gt; Conectado via SSH. Digite os comandos tocando nas opções abaixo.</div></div>
+    <div class="cmdbar" id="cmdbar"></div>
+    <div id="m2extra"></div>
+  </div>
+</section>
+
+<!-- =================== M3: SWITCH =================== -->
+<section class="screen" id="scr-m3">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão 3 · Cliente corporativo</div>
+    <h2>🔀 Switch e VLANs</h2>
+    <p>Uma empresa no mesmo bairro pediu segmentação: <b>Vendas</b> e <b>Financeiro</b> não podem se enxergar na camada 2, e a porta 8 sobe para o roteador carregando as duas VLANs.</p>
+    <div id="m3stage"></div>
+  </div>
+</section>
+
+<!-- =================== M4: BANDA =================== -->
+<section class="screen" id="scr-m4">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão 4 · Validação</div>
+    <h2>📶 Teste de banda</h2>
+    <p>O plano de 500 Mega está provisionado. Mas o número que aparece no speedtest depende de <i>onde</i> e <i>como</i> você mede. Teste nos três cenários e descubra por quê.</p>
+    <div id="m4stage"></div>
+  </div>
+</section>
+
+<!-- =================== M5: OSI =================== -->
+<section class="screen" id="scr-m5">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão 5 · Teoria viva</div>
+    <h2>🧅 Camadas OSI e TCP/IP</h2>
+    <p>Tudo que você fez até aqui tem um endereço nas camadas: o LOS é camada 1, a VLAN é camada 2, o PPPoE entrega a camada 3. Veja o encapsulamento acontecer e depois prove que sabe onde cada coisa mora.</p>
+    <div id="m5stage"></div>
+  </div>
+</section>
+
+<!-- =================== M6: PLANTÃO =================== -->
+<section class="screen" id="scr-m6">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Missão final · Suporte N1</div>
+    <h2>🎧 Plantão de chamados</h2>
+    <p>Cinco clientes na fila. Para cada um: leia os LEDs e a potência, identifique a <b>camada</b> do problema e escolha a <b>ação</b> certa. Diagnóstico de baixo para cima — pular etapa custa visita.</p>
+    <div id="m6stage"></div>
+  </div>
+</section>
+
+<!-- =================== M7: LAB PROJETO PON =================== -->
+<section class="screen" id="scr-m7">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte VI do manual</div>
+    <h2>📐 Projeto PON: orçamento de potência ao vivo</h2>
+    <p>Monte a árvore mexendo nos controles e veja o P<sub>Rx</sub> reagir em tempo real: P<sub>Rx</sub> = P<sub>Tx</sub> − (fibra + splitters + conectores + fusões). Cumpra os 3 desafios de projeto para ganhar o badge.</p>
+    <div id="m7stage"></div>
+  </div>
+</section>
+
+<!-- =================== M8: LAB OTDR =================== -->
+<section class="screen" id="scr-m8">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte VIII do manual</div>
+    <h2>📈 Leitura de traço OTDR</h2>
+    <p>Um trecho recém-certificado, 5 eventos numerados. Toque em cada marcador e classifique pela assinatura. Dica de mestre: um dos eventos só se revela <b>comparando 1310 e 1550 nm</b> — use o seletor de λ.</p>
+    <div id="m8stage"></div>
+  </div>
+</section>
+
+<!-- =================== M9: NOC DDOS =================== -->
+<section class="screen" id="scr-m9">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Plantão de NOC · Partes X e XI</div>
+    <h2>🛡️ 21h07 — alarme crítico no uplink</h2>
+    <p>O Zabbix disparou: <b>uplink de trânsito 10G a 98%</b> e subindo. Clientes da cidade inteira reclamando de lentidão. Você está sozinho no NOC. Investigue e aja pelo terminal — cada minuto de cano cheio é a cidade toda sofrendo.</p>
+    <div class="terminal" id="nocTerm"></div>
+    <div class="cmdbar" id="nocBar"></div>
+    <div id="m9extra"></div>
+  </div>
+</section>
+
+<!-- =================== M10: SUB-REDES =================== -->
+<section class="screen" id="scr-m10">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte IV do manual</div>
+    <h2>🔢 Treino de sub-redes (5 passos)</h2>
+    <p>Exercícios gerados aleatoriamente, como na vida real do IPAM. Receita: 1) tamanho do bloco = 2^(32−prefixo) · 2) rede = maior múltiplo ≤ octeto · 3) broadcast = rede + bloco − 1 · 4) hosts = bloco − 2 · 5) próxima rede. Acerte <b>3 exercícios</b> para o badge.</p>
+    <div id="m10stage"></div>
+  </div>
+</section>
+
+<!-- =================== CERTIFICADO =================== -->
+<section class="screen" id="scr-cert">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="cert">
+    <div class="seal">🏅</div>
+    <h2>Técnico Certificado</h2>
+    <p class="name mono">Operação Fibra · Manual de Redes para Provedores</p>
+    <p>Você completou todas as missões com <b class="mono" id="certXP">0 XP</b>.</p>
+    <div class="badge-grid" id="badgeGrid"></div>
+    <p style="margin-top:18px;font-size:.85rem;color:var(--ink-soft)">Quer treinar de novo? O plantão gera chamados aleatórios a cada rodada.</p>
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn gold" onclick="openMission('m6')">🎧 Novo plantão</button>
+      <button class="btn ghost" onclick="resetGame()">↺ Recomeçar do zero</button>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>Baseado nos capítulos de ONT, OLT, provisionamento PON, switching/VLAN, orçamento de potência e modelos OSI/TCP-IP do manual de redes.</footer>
+<script>
+/* ============ ESTADO ============ */
+const S = {
+  xp: 0,
+  done: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false},
+  badges: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false,exam:false},
+  ontRx: -13.4,
+  plan: null,
+};
+const BADGES = [
+  {id:'m1', ico:'🔌', name:'Instalador de Campo', desc:'Instalou a ONT e leu a potência óptica'},
+  {id:'m2', ico:'🗝️', name:'Mestre da OLT', desc:'Autorizou a ONT e subiu o PPPoE'},
+  {id:'m3', ico:'🧩', name:'Arquiteto de VLANs', desc:'Segmentou a rede sem broadcast storm'},
+  {id:'m4', ico:'🚀', name:'Velocista Honesto', desc:'Explicou o speedtest como gente grande'},
+  {id:'m5', ico:'🧅', name:'Senhor das Camadas', desc:'Dominou OSI e TCP/IP'},
+  {id:'m6', ico:'🕵️', name:'Caçador de Falhas', desc:'Fechou o plantão diagnosticando por camadas'},
+  {id:'m7', ico:'📐', name:'Projetista PON', desc:'Fechou 3 projetos no orçamento de potência'},
+  {id:'m8', ico:'📈', name:'Leitor de OTDR', desc:'Classificou todos os eventos do traço'},
+  {id:'m9', ico:'🛡️', name:'Defensor do NOC', desc:'Mitigou um DDoS de 9,4 Gbps com RTBH'},
+  {id:'m10', ico:'🔢', name:'Mestre das Sub-redes', desc:'Resolveu 3 sub-redes pela receita dos 5 passos'},
+  {id:'exam', ico:'🎓', name:'Certificação Completa', desc:'Aprovado nos 14 módulos do manual'},
+];
+const MISSIONS = [
+  {id:'m1', ico:'🏠', t:'Instalação da ONT', d:'Conector certo, drop conectado, LEDs e potência óptica na casa do cliente.', req:null},
+  {id:'m2', ico:'🖥️', t:'Provisionamento na OLT', d:'Autofind, autorização por SN, perfis de velocidade, VLAN e PPPoE.', req:'m1'},
+  {id:'m3', ico:'🔀', t:'Switch e VLANs', d:'Segmente Vendas e Financeiro, configure o trunk e evite o loop fatal.', req:'m2'},
+  {id:'m4', ico:'📶', t:'Teste de banda', d:'Cabo vs. Wi-Fi: meça, compare e aprenda a explicar para o cliente.', req:'m2'},
+  {id:'m5', ico:'🧅', t:'Camadas OSI / TCP-IP', d:'Animação do encapsulamento + desafio de classificar protocolos.', req:null},
+  {id:'m6', ico:'🎧', t:'Plantão de chamados', d:'5 clientes, LEDs e dBm na mão: diagnostique camada e ação.', req:'m5'},
+  {id:'m7', ico:'📐', t:'Lab: Projeto PON', d:'Monte a árvore (classe, distância, splitters, conectores) e veja o orçamento de potência calcular ao vivo. 3 desafios de projeto.', req:null},
+  {id:'m8', ico:'📈', t:'Lab: Leitura de OTDR', d:'Um traço interativo com 5 eventos: classifique fusão, conector, curvatura, splitter e fim — alternando 1310/1550 nm.', req:null},
+  {id:'m9', ico:'🛡️', t:'NOC sob ataque (DDoS)', d:'Uplink saturando às 21h: investigue pelo flow no terminal e escolha a mitigação certa antes de a cidade cair.', req:null},
+  {id:'m10', ico:'🔢', t:'Treino de sub-redes', d:'Exercícios gerados na hora: rede, broadcast e hosts úteis pela receita dos 5 passos e o número mágico.', req:null},
+];
+
+/* ============ UTIL ============ */
+const $ = s => document.querySelector(s);
+function addXP(n, ev){
+  S.xp += n; $('#xpVal').textContent = S.xp;
+  const f = document.createElement('div');
+  f.className = 'xp-float'; f.textContent = '+'+n+' XP';
+  const x = (ev && ev.clientX) ? ev.clientX : window.innerWidth/2;
+  const y = (ev && ev.clientY) ? ev.clientY : 130;
+  f.style.left = (x-20)+'px'; f.style.top = (y-30)+'px';
+  document.body.appendChild(f); setTimeout(()=>f.remove(),1100);
+}
+function fb(el, type, html){
+  el.className = 'feedback show '+type; el.innerHTML = html;
+}
+function lockChoices(wrap, btn, ok){
+  wrap.querySelectorAll('.choice').forEach(c=>c.style.pointerEvents='none');
+  btn.classList.add(ok?'right':'wrong');
+}
+function renderBadgesMini(){
+  $('#badgesMini').innerHTML = BADGES.map(b=>
+    `<div class="badge-dot ${S.badges[b.id]?'won':''}" title="${b.name}">${b.ico}</div>`).join('');
+}
+function completeMission(id){
+  if(!S.done[id]){ S.done[id]=true; S.badges[id]=true; renderBadgesMini(); }
+  if(Object.values(S.done).every(v=>v)){ setTimeout(()=>show('scr-cert'),600); renderCert(); }
+}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active'); window.scrollTo({top:0});
+}
+function goMap(){ renderMap(); show('scr-map'); }
+function openMission(id){
+  const m = MISSIONS.find(x=>x.id===id);
+  if(m.req && !S.done[m.req]) return;
+  if(id==='m1') initM1();
+  if(id==='m2') initM2();
+  if(id==='m3') initM3();
+  if(id==='m4') initM4();
+  if(id==='m5') initM5();
+  if(id==='m6') initM6();
+  if(id==='m7') initM7();
+  if(id==='m8') initM8();
+  if(id==='m9') initM9();
+  if(id==='m10') initM10();
+  show('scr-'+id);
+}
+function renderMap(){
+  $('#routeList').innerHTML = MISSIONS.map((m,i)=>{
+    const locked = m.req && !S.done[m.req];
+    const st = S.done[m.id] ? ['done','✓ Concluída'] : locked ? ['locked','🔒 Conclua "'+MISSIONS.find(x=>x.id===m.req).t+'"'] : ['open','▶ Disponível'];
+    return `<div class="mcard ${st[0]}" data-icon="${i+1}" onclick="openMission('${m.id}')">
+      <h3>${m.ico} ${m.t}</h3><p>${m.d}</p><span class="mstatus">${st[1]}</span></div>`;
+  }).join('');
+}
+function renderCert(){
+  $('#certXP').textContent = S.xp+' XP';
+  $('#badgeGrid').innerHTML = BADGES.map(b=>
+    `<div class="badge-card ${S.badges[b.id]?'won':''}"><span class="bi">${b.ico}</span><b>${b.name}</b>${b.desc}</div>`).join('');
+}
+function resetGame(){ location.reload(); }
+
+/* ============ ONT SVG (compartilhada) ============ */
+function ontSVG(leds){
+  // leds = {power, pon:'off|blink|on', los, net}
+  const c = {on:'#1f9d55', off:'#d8e1e6', red:'#d64545'};
+  const pon = leds.pon==='on' ? `fill="${c.on}"` : leds.pon==='blink' ? `fill="${c.on}" class="led blink"` : `fill="${c.off}"`;
+  return `<svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+    <rect x="10" y="15" width="540" height="120" rx="14" fill="#fff" stroke="#15303d" stroke-width="3"/>
+    <text x="36" y="44" font-family="Saira Condensed" font-weight="800" font-size="17" fill="#15303d">ONT · GPON</text>
+    <circle class="led" cx="50" cy="80" r="9" fill="${leds.power?c.on:c.off}"/><text x="50" y="112" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#4d6a78">POWER</text>
+    <circle class="led" cx="130" cy="80" r="9" ${pon}/><text x="130" y="112" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#4d6a78">PON</text>
+    <circle class="led ${leds.los?'blink':''}" cx="210" cy="80" r="9" fill="${leds.los?c.red:c.off}"/><text x="210" y="112" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#4d6a78">LOS</text>
+    <circle class="led" cx="290" cy="80" r="9" fill="${leds.net?c.on:c.off}"/><text x="290" y="112" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#4d6a78">INTERNET</text>
+    <rect x="360" y="60" width="44" height="40" rx="4" fill="#fffbe8" stroke="#1f9d55" stroke-width="3"/><text x="382" y="118" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="#4d6a78">ÓPTICA</text>
+    <rect x="420" y="60" width="36" height="40" rx="4" fill="#e7eefc" stroke="#15303d" stroke-width="2"/><text x="438" y="118" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="#4d6a78">LAN1</text>
+    <rect x="466" y="60" width="36" height="40" rx="4" fill="#e7eefc" stroke="#15303d" stroke-width="2"/><text x="484" y="118" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="#4d6a78">LAN2</text>
+  </svg>`;
+}
+
+/* ============ MISSÃO 1 ============ */
+let m1step = 0;
+function m1Prog(){
+  $('#m1prog').innerHTML = [0,1,2,3,4].map(i=>
+    `<i class="${i<m1step?'done':i===m1step?'cur':''}"></i>`).join('');
+}
+function initM1(){ m1step = S.done.m1 ? 4 : 0; m1Steps[Math.min(m1step,4)](); }
+
+const m1Steps = [
+/* passo 0: conector */
+function(){ m1step=0; m1Prog();
+  $('#m1stage').innerHTML = `
+  <h3 class="disp" style="margin-top:16px">Passo 1 — Qual conector vai na ONT?</h3>
+  <p style="color:var(--ink-soft);font-size:.9rem;margin-top:4px">A porta óptica da ONT GPON tem borda <b>verde</b>. Toque no conector correto do drop:</p>
+  <div class="choices" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+    <button class="choice" id="cUPC" style="text-align:center">
+      <svg viewBox="0 0 120 50" width="120"><rect x="5" y="12" width="70" height="26" rx="4" fill="#2a6fdb"/><rect x="75" y="18" width="30" height="14" fill="#cfd9de"/><rect x="105" y="22" width="12" height="6" fill="#f2b705"/></svg>
+      <b>SC/UPC azul</b><br><small>polimento reto</small></button>
+    <button class="choice" id="cAPC" style="text-align:center">
+      <svg viewBox="0 0 120 50" width="120"><rect x="5" y="12" width="70" height="26" rx="4" fill="#1f9d55"/><rect x="75" y="18" width="30" height="14" fill="#cfd9de"/><rect x="105" y="22" width="12" height="6" fill="#f2b705"/></svg>
+      <b>SC/APC verde</b><br><small>polimento angular 8°</small></button>
+  </div>
+  <div class="feedback" id="m1f0"></div>`;
+  $('#cAPC').onclick = e=>{
+    lockChoices($('#m1stage'), $('#cAPC'), true);
+    fb($('#m1f0'),'ok','✅ <b>SC/APC verde</b>: o polimento em ângulo de 8° reduz a reflexão de volta para a fonte — essencial em redes PON. Verde com verde, azul com azul: misturar APC com UPC gera perda e reflexão altas.');
+    addXP(20,e); nextBtn('#m1stage',()=>m1Steps[1]());
+  };
+  $('#cUPC').onclick = ()=>{
+    $('#cUPC').classList.add('wrong');
+    fb($('#m1f0'),'bad','❌ O UPC azul (polimento reto) reflete mais luz de volta. Em PON, a porta da ONT é <b>APC verde</b>. Tente de novo!');
+  };
+},
+/* passo 1: conectar drop */
+function(){ m1step=1; m1Prog();
+  $('#m1stage').innerHTML = `
+  <h3 class="disp" style="margin-top:16px">Passo 2 — Conecte o drop: CTO → ONT</h3>
+  <p style="color:var(--ink-soft);font-size:.9rem;margin-top:4px">Toque na <b>porta livre da CTO</b> (no poste) e depois na <b>porta óptica da ONT</b>. Capriche: nada de dobras apertadas no caminho.</p>
+  <div class="connect-stage">
+  <svg class="cto-svg" id="dropSvg" viewBox="0 0 700 260" style="width:100%;max-width:700px;display:block;margin:0 auto">
+    <text x="95" y="22" text-anchor="middle" font-family="Saira Condensed" font-weight="800" font-size="16" fill="#15303d">CTO (poste)</text>
+    <rect x="30" y="30" width="130" height="150" rx="10" fill="#fff" stroke="#15303d" stroke-width="3"/>
+    <g class="port" id="ctoBusy"><rect x="55" y="55" width="80" height="26" rx="4" fill="#fbe3e3" stroke="#d64545" stroke-width="2"/><text x="95" y="73" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#d64545">P1 ocupada</text></g>
+    <g class="port" id="ctoFree"><rect x="55" y="95" width="80" height="26" rx="4" fill="#def3e6" stroke="#1f9d55" stroke-width="2"/><text x="95" y="113" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#1f9d55">P2 livre</text></g>
+    <g class="port" id="ctoBusy2"><rect x="55" y="135" width="80" height="26" rx="4" fill="#fbe3e3" stroke="#d64545" stroke-width="2"/><text x="95" y="153" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#d64545">P3 ocupada</text></g>
+    <text x="560" y="22" text-anchor="middle" font-family="Saira Condensed" font-weight="800" font-size="16" fill="#15303d">Casa do cliente</text>
+    <rect x="460" y="30" width="200" height="150" rx="10" fill="#fff" stroke="#15303d" stroke-width="3"/>
+    <g class="port" id="ontPort"><rect x="520" y="85" width="80" height="40" rx="5" fill="#fffbe8" stroke="#1f9d55" stroke-width="3"/><text x="560" y="110" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#15303d">ÓPTICA</text></g>
+    <text x="560" y="150" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="#4d6a78">ONT</text>
+    <path id="dropPath" d="M 135 108 C 280 108, 320 105, 520 105" fill="none" stroke="#f2b705" stroke-width="6" stroke-linecap="round" stroke-dasharray="600" stroke-dashoffset="600" style="transition:stroke-dashoffset 1.4s ease"/>
+    <circle id="lightDot" r="6" fill="#fff" stroke="#f2b705" stroke-width="3" opacity="0"/>
+    <text x="350" y="235" text-anchor="middle" font-size="12" font-family="Inter" fill="#4d6a78" id="dropMsg">1º toque: porta livre da CTO</text>
+  </svg>
+  </div>
+  <div class="feedback" id="m1f1"></div>`;
+  let picked = null;
+  const msg = $('#dropMsg');
+  $('#ctoFree').onclick = e=>{
+    picked='cto'; msg.textContent='✓ CTO ok! Agora toque na porta ÓPTICA da ONT.';
+    $('#ctoFree rect').setAttribute('stroke-width','4'); addXP(10,e);
+  };
+  $('#ctoBusy').onclick = $('#ctoBusy2').onclick = ()=>{
+    fb($('#m1f1'),'bad','❌ Essa porta do splitter da CTO já atende outro assinante. Desconectar derruba o vizinho — escolha a <b>porta livre</b>.');
+  };
+  $('#ontPort').onclick = e=>{
+    if(picked!=='cto'){ msg.textContent='Primeiro toque na porta livre da CTO!'; return; }
+    $('#dropPath').style.strokeDashoffset='0';
+    msg.textContent='Drop conectado! Luz descendo da OLT…';
+    addXP(20,e);
+    setTimeout(()=>{
+      const dot = $('#lightDot'); dot.setAttribute('opacity','1');
+      const path = $('#dropPath'); const len = path.getTotalLength();
+      let t0 = null;
+      function anim(ts){ if(!t0) t0=ts; const p=Math.min((ts-t0)/1200,1);
+        const pt = path.getPointAtLength(p*len); dot.setAttribute('cx',pt.x); dot.setAttribute('cy',pt.y);
+        if(p<1) requestAnimationFrame(anim); else {
+          fb($('#m1f1'),'ok','✅ Drop conectado da porta livre do splitter até a ONT. A luz de <b>downstream (1490 nm)</b> chegou — agora vamos energizar e ler os LEDs.');
+          nextBtn('#m1stage',()=>m1Steps[2]());
+        } }
+      requestAnimationFrame(anim);
+    },1300);
+  };
+},
+/* passo 2: LOS! troubleshoot */
+function(){ m1step=2; m1Prog();
+  $('#m1stage').innerHTML = `
+  <h3 class="disp" style="margin-top:16px">Passo 3 — Energizou… e deu LOS! 😱</h3>
+  <div class="ont-box"><div class="ont-svgwrap">${ontSVG({power:true,pon:'off',los:true,net:false})}</div></div>
+  <div class="meter"><div class="lbl">Potência Rx na ONT</div><div class="val" id="rxVal">--.- dBm</div>
+    <div class="scale"><div class="needle" style="left:2%"></div></div>
+    <div class="ticks"><span>-40</span><span>-28</span><span>-24</span><span>-8</span></div></div>
+  <p style="margin-top:14px;font-size:.9rem"><b>LOS vermelho = sem luz = problema de camada 1.</b> Nada acima funciona enquanto isso não resolver. Qual sua <b>primeira</b> ação?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">🔄 Trocar a ONT por outra nova</button>
+    <button class="choice" data-ok="1">🧼 Reencaixar e limpar o conector verde e inspecionar o drop em busca de dobras apertadas</button>
+    <button class="choice" data-ok="0">📞 Ligar para a central pedindo para reiniciar a OLT</button>
+  </div>
+  <div class="feedback" id="m1f2"></div>`;
+  $('#m1stage').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m1stage'),c,true);
+        fb($('#m1f2'),'ok','✅ Regra de campo: <b>LOS aceso = problema óptico</b>. Conector sujo/solto e dobra no drop (macrobending) são as causas nº 1. Você limpou, reencaixou… e a luz voltou! Veja o medidor:');
+        addXP(30,e);
+        const rx = -13.4; S.ontRx = rx;
+        animateRx(rx, ()=> nextBtn('#m1stage',()=>m1Steps[3]()));
+        // apaga LOS, PON pisca
+        setTimeout(()=>{ $('#m1stage .ont-box').innerHTML = `<div class="ont-svgwrap">${ontSVG({power:true,pon:'blink',los:false,net:false})}</div>`; },800);
+      } else {
+        c.classList.add('wrong');
+        fb($('#m1f2'),'bad', c.textContent.includes('ONT')
+          ? '❌ Trocar a ONT sem medir é chute caro. Se não chega luz, a ONT nova vai mostrar o mesmo LOS. Cheque primeiro a camada 1: conector e drop.'
+          : '❌ Reiniciar a OLT derrubaria <b>todos</b> os clientes da PON — e o problema é local. Diagnóstico vai de baixo para cima: comece pela fibra na casa.');
+      }
+    };
+  });
+},
+/* passo 3: classificar potência */
+function(){ m1step=3; m1Prog();
+  $('#m1stage').innerHTML = `
+  <h3 class="disp" style="margin-top:16px">Passo 4 — Leia o medidor como um profissional</h3>
+  <div class="ont-box"><div class="ont-svgwrap">${ontSVG({power:true,pon:'blink',los:false,net:false})}</div>
+  <div class="leds-legend"><span><i style="background:#1f9d55"></i> PON piscando = tentando registrar na OLT</span></div></div>
+  <div class="meter"><div class="lbl">Potência Rx na ONT</div><div class="val">−13.4 dBm</div>
+    <div class="scale"><div class="needle" style="left:${rxToPct(-13.4)}%"></div></div>
+    <div class="ticks"><span>-40</span><span>-28</span><span>-24</span><span>-8</span></div></div>
+  <p style="margin-top:14px;font-size:.9rem">Como você classifica <b>−13,4 dBm</b> em GPON?</p>
+  <div class="choices">
+    <button class="choice" data-ok="1">💚 Faixa saudável (entre −8 e −24 dBm)</button>
+    <button class="choice" data-ok="0">⚠️ Limítrofe — perto da sensibilidade da ONT</button>
+    <button class="choice" data-ok="0">🚨 Abaixo da sensibilidade — vai cair toda hora</button>
+  </div>
+  <div class="feedback" id="m1f3"></div>
+  <div class="kfact">💡 <b>Cola do técnico (GPON):</b> −8 a −24 dBm = saudável · −25 a −27 = limítrofe, fique de olho · abaixo de −27/−28 = fora da sensibilidade, cai/instável. Esse número é o resultado do <b>orçamento de potência</b>: TX da OLT menos fibra, splitters, conectores e fusões.</div>`;
+  $('#m1stage').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m1stage'),c,true);
+        fb($('#m1f3'),'ok','✅ Exato! −13,4 dBm está confortável dentro da faixa saudável, com boa margem até a sensibilidade (−28 dBm). Instalação física <b>aprovada</b>.');
+        addXP(30,e); nextBtn('#m1stage',()=>m1Steps[4]());
+      } else { c.classList.add('wrong'); fb($('#m1f3'),'bad','❌ Olhe a régua: −13,4 está bem dentro de −8 a −24. Limítrofe seria por volta de −25 a −27.'); }
+    };
+  });
+},
+/* passo 4: fim m1 */
+function(){ m1step=4; m1Prog();
+  completeMission('m1');
+  $('#m1stage').innerHTML = `
+  <div class="feedback show ok" style="display:block">🏅 <b>Badge conquistado: Instalador de Campo!</b><br><br>
+  Mas repare: o LED <b>PON continua piscando</b>. A OLT <i>descobriu</i> a ONT pelo número de série, mas ninguém a <b>autorizou</b> ainda. A casa está pronta — o serviço, não.</div>
+  <div class="ont-box"><div class="ont-svgwrap">${ontSVG({power:true,pon:'blink',los:false,net:false})}</div></div>
+  <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn gold" onclick="openMission('m2')">🖥️ Ir para a OLT autorizar →</button>
+    <button class="btn ghost" onclick="goMap()">Mapa de missões</button>
+  </div>`;
+}
+];
+function nextBtn(sel, fn, label){
+  const b = document.createElement('button');
+  b.className='btn gold'; b.style.marginTop='16px'; b.textContent = label||'Continuar →';
+  b.onclick = fn; $(sel).appendChild(b); if(b.scrollIntoView) b.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function rxToPct(rx){ // -40..-8 dBm => 0..100%
+  return Math.max(0,Math.min(100,((rx+40)/32)*100));
+}
+function animateRx(target, cb){
+  const val = $('#rxVal'); const needle = $('#m1stage .needle');
+  let cur=-40; const iv = setInterval(()=>{
+    cur += (target-cur)*0.15;
+    val.textContent = cur.toFixed(1).replace('-','−')+' dBm';
+    needle.style.left = rxToPct(cur)+'%';
+    if(Math.abs(cur-target)<0.15){ clearInterval(iv); val.textContent=target.toFixed(1).replace('-','−')+' dBm'; needle.style.left=rxToPct(target)+'%'; cb&&cb(); }
+  },60);
+}
+
+/* ============ MISSÃO 2: OLT ============ */
+let m2state;
+function termLine(html, cls){
+  const t = $('#term'); const d = document.createElement('div');
+  d.className = 'out '+(cls||''); d.innerHTML = html; t.appendChild(d); t.scrollTop = t.scrollHeight;
+}
+function initM2(){
+  m2state = {step:0};
+  $('#term').innerHTML = '<div class="out sys">OLT-CENTRO&gt; Conectado via SSH. Toque nos comandos abaixo para executá-los.</div>';
+  $('#m2extra').innerHTML='';
+  renderCmdbar();
+}
+function renderCmdbar(){
+  const steps = [
+    [{c:'display ont autofind all', ok:true},{c:'reboot system', ok:false},{c:'display board 0', ok:false, neutral:true}],
+    [{c:'ont add 0/1/2 sn-auth HWTC-A1B2C3D4', ok:true},{c:'ont add 0/1/2 sn-auth HWTC-FFFF0000', ok:false},{c:'ont delete 0/1/2 all', ok:false}],
+    [{c:'ont-lineprofile perfil-300M', ok:false},{c:'ont-lineprofile perfil-500M', ok:true},{c:'ont-lineprofile perfil-1G', ok:false}],
+    [{c:'service-port vlan 1101 gpon 0/1/2 ont 1', ok:true},{c:'service-port vlan 1 gpon 0/1/2 ont 1', ok:false}],
+  ];
+  const bar = $('#cmdbar');
+  if(m2state.step>=steps.length){ bar.innerHTML=''; return; }
+  bar.innerHTML = steps[m2state.step].map((s,i)=>
+    `<button class="cmdchip" data-i="${i}">${s.c}</button>`).join('');
+  bar.querySelectorAll('.cmdchip').forEach(btn=>{
+    btn.onclick = e=>{
+      const s = steps[m2state.step][+btn.dataset.i];
+      termLine('OLT-CENTRO(config)# <span class="cmdline">'+s.c+'</span>');
+      m2Handle(s, e);
+    };
+  });
+}
+function m2Handle(s, e){
+  const st = m2state.step;
+  if(st===0){
+    if(s.neutral){ termLine('Placa GPON 0/1: <span class="hl">ONLINE</span> · 16 portas PON · uplink 10G ok','sys'); return; }
+    if(!s.ok){ termLine('⚠ Comando bloqueado: reiniciar a OLT derrubaria TODOS os assinantes das 16 PONs. O problema é 1 ONT nova.','sys'); return; }
+    termLine('----------------------------------------\n  ONT autofind (não autorizadas):\n  Porta: 0/1/<span class="hl">2</span>   SN: <span class="hl">HWTC-A1B2C3D4</span>\n  Modelo: ONT-AC1200  Estado: <span class="hl">aguardando autorização</span>\n----------------------------------------','');
+    termLine('💡 A OLT descobriu a ONT pelo número de série. Confira se o SN bate com o do contrato antes de autorizar!','sys');
+    m2state.step=1; addXP(20,e); renderCmdbar();
+  }
+  else if(st===1){
+    if(!s.ok){
+      if(s.c.includes('delete')){ termLine('⚠ Isso removeria as ONTs já autorizadas da porta — adeus, vizinhos online. Cancelado.','sys'); }
+      else termLine('✖ SN <span class="hl">HWTC-FFFF0000</span> não encontrado no autofind. O SN certo está no contrato e na etiqueta da ONT.','sys');
+      return;
+    }
+    termLine('✔ ONT autorizada na porta 0/1/2 com ID 1. Vínculo SN ↔ cliente criado.\nAgora aplique o <span class="hl">line profile</span> do plano contratado:','');
+    m2state.step=2; addXP(25,e); renderCmdbar();
+  }
+  else if(st===2){
+    if(!s.ok){ termLine('✖ Perfil não confere com o contrato (MARIA OLIVEIRA · plano <span class="hl">500 MEGA</span>). Perfil errado = cliente reclamando de velocidade ou provedor dando banda de graça.','sys'); return; }
+    S.plan = 500;
+    termLine('✔ Line profile <span class="hl">perfil-500M</span> aplicado (DBA/T-CONT) + service profile padrão (2 LAN, Wi-Fi, modo router).\nFalta mapear a VLAN do cliente:','');
+    m2state.step=3; addXP(25,e); renderCmdbar();
+  }
+  else if(st===3){
+    if(!s.ok){ termLine('✖ VLAN 1 é a default — usar para cliente é receita de confusão e insegurança. O contrato define a C-VLAN <span class="hl">1101</span>.','sys'); return; }
+    termLine('✔ Service-port criado: C-VLAN <span class="hl">1101</span> do cliente, empilhada na S-VLAN da PON (<span class="hl">Q-in-Q</span>) até o BNG.\n\n>>> LED PON da ONT: <span class="hl">FIXO</span> ✔ (autenticada na OLT — camadas 1/2 ok)','');
+    m2state.step=4; addXP(25,e); renderCmdbar();
+    m2Quiz();
+  }
+}
+function m2Quiz(){
+  $('#m2extra').innerHTML = `
+  <div class="ont-box"><div class="ont-svgwrap">${ontSVG({power:true,pon:'on',los:false,net:false})}</div>
+  <div class="leds-legend"><span><i style="background:#1f9d55"></i> PON fixo: autorizada! Mas INTERNET ainda apagado…</span></div></div>
+  <p style="margin-top:14px;font-size:.9rem"><b>Pergunta rápida:</b> por que cada cliente ganha a <i>sua própria</i> C-VLAN?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">Para a internet ficar mais rápida, já que VLAN aumenta a banda</button>
+    <button class="choice" data-ok="1">Para isolar os assinantes na camada 2 (sem ARP spoofing entre vizinhos) e rastrear cada cliente da ONT até o BNG</button>
+    <button class="choice" data-ok="0">Porque a fibra só transmite uma VLAN por vez</button>
+  </div>
+  <div class="feedback" id="m2f"></div>`;
+  $('#m2extra').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m2extra'),c,true);
+        fb($('#m2f'),'ok','✅ Isolamento + rastreabilidade + política por cliente. A dupla C-VLAN/S-VLAN (Q-in-Q) identifica o assinante de ponta a ponta.');
+        addXP(25,e); m2PPPoE();
+      } else { c.classList.add('wrong'); fb($('#m2f'),'bad','❌ VLAN não dá velocidade nem é limitação da fibra — é <b>segmentação lógica</b> de camada 2. Pense em isolamento e identificação.'); }
+    };
+  });
+}
+function m2PPPoE(){
+  const d = document.createElement('div');
+  d.innerHTML = `
+  <h3 class="disp" style="margin-top:20px">Último passo: subir o PPPoE</h3>
+  <p style="color:var(--ink-soft);font-size:.9rem">A ONT (modo router) disca a sessão PPPoE; o BNG consulta o RADIUS e, se aprovar, entrega o IP — aí sim o LED INTERNET acende (camada 3).</p>
+  <div class="contract" style="max-width:380px">
+    <h4>🔐 Credenciais PPPoE</h4>
+    <table><tr><td>Usuário</td><td>maria@provedor</td></tr><tr><td>Senha</td><td>••••••••</td></tr></table>
+    <button class="btn gold" style="margin-top:12px;width:100%" id="dialBtn">📡 Discar sessão PPPoE</button>
+  </div>
+  <div class="terminal" id="radiusLog" style="min-height:120px;display:none"></div>
+  <div id="m2end"></div>`;
+  $('#m2extra').appendChild(d);
+  $('#dialBtn').onclick = e=>{
+    $('#dialBtn').disabled = true;
+    const log = $('#radiusLog'); log.style.display='block';
+    const lines = [
+      ['ONT → BNG: PADI (procurando concentrador…)','sys',400],
+      ['BNG → ONT: PADO · BNG → ONT: sessão aberta (PADS)','sys',900],
+      ['BNG → RADIUS: Access-Request (maria@provedor, C-VLAN 1101)','',1500],
+      ['RADIUS → BNG: <span class="hl">Access-Accept</span> ✔ · plano 500M · rate-limit aplicado','',2200],
+      ['BNG → ONT: IP 100.72.14.88 + prefixo IPv6 ✔  —  LED INTERNET: <span class="hl">ACESO</span> 🎉','',2900],
+    ];
+    lines.forEach(([txt,cls,t])=> setTimeout(()=>{
+      const dv = document.createElement('div'); dv.className='out '+cls; dv.innerHTML=txt; log.appendChild(dv); log.scrollTop=1e6;
+    },t));
+    setTimeout(()=>{
+      addXP(30,e); completeMission('m2');
+      $('#m2end').innerHTML = `
+      <div class="ont-box"><div class="ont-svgwrap">${ontSVG({power:true,pon:'on',los:false,net:true})}</div></div>
+      <div class="feedback show ok">🏅 <b>Badge: Mestre da OLT!</b> Descoberta por SN → autorização → perfis → VLAN → PPPoE/RADIUS → IP. Esse é o fluxo completo de provisionamento de um provedor.</div>
+      <div class="kfact">💡 <b>TR-069/ACS:</b> com a ONT online, o provedor gerencia tudo remotamente — Wi-Fi, firmware, diagnóstico — <b>sem ir à casa do cliente</b>. Ler a potência pela OLT antes de despachar técnico economiza visitas.</div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn gold" onclick="openMission('m3')">🔀 Próxima: Switch e VLANs →</button>
+        <button class="btn ghost" onclick="goMap()">Mapa</button>
+      </div>`;
+    },3400);
+  };
+}
+
+/* ============ MISSÃO 3: SWITCH ============ */
+let m3;
+function initM3(){
+  m3 = {sel:null, ports:{}, checked:false};
+  $('#m3stage').innerHTML = `
+  <div class="kfact" style="margin-top:14px">🎯 <b>Pedido do cliente:</b> portas <b>1–4</b> → Vendas (VLAN 10) · portas <b>5–6</b> → Financeiro (VLAN 20) · porta <b>7</b> fica vazia · porta <b>8</b> → <b>trunk</b> para o roteador (carrega as duas VLANs com tag 802.1Q).</div>
+  <p style="margin-top:12px;font-size:.88rem;color:var(--ink-soft)">1) Toque numa etiqueta de VLAN · 2) toque nas portas para aplicar:</p>
+  <div class="vlan-palette">
+    <button class="vtag" data-v="10">VLAN 10 · Vendas</button>
+    <button class="vtag" data-v="20">VLAN 20 · Financeiro</button>
+    <button class="vtag" data-v="trunk">TRUNK 802.1Q</button>
+  </div>
+  <div class="sw-ports" id="swPorts"></div>
+  <div class="deskrow"><span>PC vendas</span><span>PC vendas</span><span>PC vendas</span><span>Impressora vendas</span><span>PC financeiro</span><span>PC financeiro</span><span>—</span><span>→ Roteador</span></div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn" id="swTest">⚡ Testar broadcast</button>
+    <button class="btn gold" id="swCheck">✓ Validar configuração</button>
+  </div>
+  <div class="feedback" id="m3f"></div>
+  <div id="m3quiz"></div>`;
+  const sw = $('#swPorts');
+  for(let i=1;i<=8;i++){
+    const p = document.createElement('div');
+    p.className='sw-port'; p.dataset.p=i;
+    p.innerHTML = `<span class="pn">P${i}</span><span class="pv">—</span>`;
+    p.onclick = ()=>{
+      if(!m3.sel){ fb($('#m3f'),'info','Escolha primeiro uma etiqueta de VLAN ou TRUNK na paleta acima.'); return; }
+      m3.ports[i]=m3.sel;
+      p.className='sw-port '+(m3.sel==='trunk'?'vtrunk':'v'+m3.sel);
+      p.querySelector('.pv').textContent = m3.sel==='trunk'?'TRUNK':'VLAN '+m3.sel;
+    };
+    sw.appendChild(p);
+  }
+  document.querySelectorAll('.vtag').forEach(t=>{
+    t.onclick = ()=>{ document.querySelectorAll('.vtag').forEach(x=>x.classList.remove('sel')); t.classList.add('sel'); m3.sel=t.dataset.v; };
+  });
+  $('#swTest').onclick = ()=>{
+    // broadcast a partir da P1: pisca portas da mesma VLAN da P1 + trunk
+    const v1 = m3.ports[1];
+    if(!v1){ fb($('#m3f'),'info','Configure pelo menos a porta 1 antes de testar.'); return; }
+    document.querySelectorAll('.sw-port').forEach(p=>p.classList.remove('flash'));
+    let reached=[];
+    for(let i=2;i<=8;i++){
+      const v = m3.ports[i];
+      if(v && (v===v1 || v==='trunk')){ reached.push(i);
+        setTimeout(()=>document.querySelector('.sw-port[data-p="'+i+'"]').classList.add('flash'), 150*i); }
+    }
+    fb($('#m3f'),'info','📣 Um broadcast (ex.: ARP) entrou pela P1. Ele se espalha <b>só dentro da mesma VLAN</b> (+ trunk). Portas alcançadas: '+(reached.length?reached.map(x=>'P'+x).join(', '):'nenhuma')+'. É assim que a VLAN corta o domínio de broadcast.');
+  };
+  $('#swCheck').onclick = e=>{
+    const want = {1:'10',2:'10',3:'10',4:'10',5:'20',6:'20',8:'trunk'};
+    let errs=[];
+    for(const k in want){ if(m3.ports[k]!==want[k]) errs.push('P'+k); }
+    if(m3.ports[7]) errs.push('P7 (deveria ficar vazia — porta sem uso configurada é porta de risco)');
+    if(errs.length){ fb($('#m3f'),'bad','❌ Revise: '+errs.join(', ')+'. Confira o pedido no quadro amarelo.'); return; }
+    fb($('#m3f'),'ok','✅ Segmentação perfeita! Vendas e Financeiro isolados na camada 2; o trunk leva as duas VLANs <b>com tag 802.1Q</b> até o roteador, que faz a comunicação entre elas na camada 3.');
+    addXP(50,e);
+    if(!m3.checked){ m3.checked=true; m3Quiz(); }
+  };
+}
+function m3Quiz(){
+  $('#m3quiz').innerHTML = `
+  <h3 class="disp" style="margin-top:20px">Bônus: o estagiário fez besteira</h3>
+  <p style="font-size:.9rem;color:var(--ink-soft)">Ele ligou um cabo entre duas portas do mesmo switch "para dar mais velocidade". Sem STP ativo, o que acontece?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">Nada — o switch ignora cabos duplicados</button>
+    <button class="choice" data-ok="1">Broadcast storm: os quadros circulam no laço para sempre (Ethernet não tem TTL) e a rede cai em segundos</button>
+    <button class="choice" data-ok="0">A velocidade dobra, como ele esperava</button>
+  </div>
+  <div class="feedback" id="m3f2"></div>`;
+  $('#m3quiz').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m3quiz'),c,true);
+        fb($('#m3f2'),'ok','✅ Laço em L2 = <b>tempestade de broadcast</b>. O <b>STP/RSTP</b> existe para isso: bloqueia portas redundantes e reconverge se um link cair (RSTP em ~1–6 s). 🏅 <b>Badge: Arquiteto de VLANs!</b>');
+        addXP(30,e); completeMission('m3');
+        nextBtn('#m3quiz',()=>openMission('m4'),'📶 Próxima: teste de banda →');
+      } else { c.classList.add('wrong'); fb($('#m3f2'),'bad','❌ Ethernet não tem TTL como o IP: o quadro em loop circula infinitamente, multiplicando broadcasts até derrubar tudo.'); }
+    };
+  });
+}
+
+/* ============ MISSÃO 4: BANDA ============ */
+let m4;
+function initM4(){
+  m4 = {tested:{}, };
+  const plan = S.plan || 500;
+  $('#m4stage').innerHTML = `
+  <p style="margin-top:12px;font-size:.88rem"><b>Plano provisionado: ${plan} Mega.</b> Escolha um cenário e rode o teste (faça os três!):</p>
+  <div class="testopts">
+    <button class="topt" data-k="cabo"><span class="ico">🔌</span><b>Notebook no cabo</b><small>porta LAN gigabit</small></button>
+    <button class="topt" data-k="wifi5"><span class="ico">📶</span><b>Celular · Wi-Fi 5 GHz</b><small>mesmo cômodo da ONT</small></button>
+    <button class="topt" data-k="wifi24"><span class="ico">🐌</span><b>Celular antigo · 2,4 GHz</b><small>3 paredes de distância</small></button>
+  </div>
+  <div class="gauge-wrap">
+    <svg viewBox="0 0 220 130" width="230"><path d="M20 120 A 90 90 0 0 1 200 120" fill="none" stroke="#d8e1e6" stroke-width="16" stroke-linecap="round"/>
+    <path id="gArc" d="M20 120 A 90 90 0 0 1 200 120" fill="none" stroke="#1f9d55" stroke-width="16" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" style="transition:stroke-dashoffset 1.6s ease"/></svg>
+    <div class="gauge-val"><span id="gNum">0</span><small> Mbps ↓</small></div>
+  </div>
+  <table class="result-table" id="resTable" style="display:none">
+    <tr><th>Cenário</th><th style="text-align:right">Resultado</th></tr>
+  </table>
+  <div class="feedback" id="m4f"></div>
+  <div id="m4quiz"></div>`;
+  const results = {cabo:[472, 'Cabo gigabit: ~472 Mbps. Os ~5% que "faltam" são overhead de protocolo (PPPoE, IP, TCP) — normal e esperado.'],
+                   wifi5:[318,'Wi-Fi 5 GHz perto: ~318 Mbps. O ar é meio compartilhado (half-duplex) e tem overhead de rádio — bom resultado para Wi-Fi.'],
+                   wifi24:[74,'2,4 GHz longe: ~74 Mbps. Banda estreita, interferência (micro-ondas, vizinhos) e paredes. O plano está íntegro — o gargalo é o rádio.']};
+  document.querySelectorAll('.topt').forEach(t=>{
+    t.onclick = e=>{
+      document.querySelectorAll('.topt').forEach(x=>x.classList.remove('sel')); t.classList.add('sel');
+      const k = t.dataset.k; const [mbps,txt] = results[k];
+      const jitter = Math.round(mbps*(0.97+Math.random()*0.06));
+      runGauge(jitter, plan);
+      fb($('#m4f'),'info','📊 '+txt);
+      if(!m4.tested[k]){
+        m4.tested[k]=jitter; addXP(15,e);
+        const tb=$('#resTable'); tb.style.display='table';
+        const tr=document.createElement('tr'); tr.innerHTML='<td>'+t.querySelector('b').textContent+'</td><td>'+jitter+' Mbps</td>'; tb.appendChild(tr);
+        if(Object.keys(m4.tested).length===3) m4Quiz();
+      }
+    };
+  });
+}
+function runGauge(mbps, plan){
+  const pct = Math.min(mbps/plan,1);
+  $('#gArc').style.strokeDashoffset = 283*(1-pct);
+  $('#gArc').setAttribute('stroke', mbps>plan*0.7?'#1f9d55':mbps>plan*0.3?'#e8a13a':'#d64545');
+  let cur=0; const iv=setInterval(()=>{ cur+=(mbps-cur)*0.12; $('#gNum').textContent=Math.round(cur);
+    if(Math.abs(cur-mbps)<1){ $('#gNum').textContent=mbps; clearInterval(iv);} },50);
+}
+function m4Quiz(){
+  $('#m4quiz').innerHTML = `
+  <h3 class="disp" style="margin-top:20px">O cliente liga reclamando</h3>
+  <p style="font-size:.9rem;color:var(--ink-soft)">"Pago 500 e no meu celular só chega 74! Quero desconto!" — Qual a resposta correta do técnico?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">"Vou trocar sua ONT, ela deve estar com defeito."</button>
+    <button class="choice" data-ok="1">"O plano está íntegro — no cabo chegam ~470 Mbps. No seu celular, o limite é o Wi-Fi 2,4 GHz com distância e paredes. Vamos testar no 5 GHz perto do roteador e avaliar reposicionar a ONT ou usar mesh."</button>
+    <button class="choice" data-ok="0">"É normal, internet nunca chega nem na metade do contratado."</button>
+  </div>
+  <div class="feedback" id="m4f2"></div>`;
+  $('#m4quiz').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m4quiz'),c,true);
+        fb($('#m4f2'),'ok','✅ Medir no cabo separa "problema do plano" de "limite do Wi-Fi" — e você ofereceu solução em vez de desculpa. 🏅 <b>Badge: Velocista Honesto!</b>');
+        addXP(30,e); completeMission('m4');
+        nextBtn('#m4quiz',()=>openMission('m5'),'🧅 Próxima: camadas OSI →');
+      } else { c.classList.add('wrong'); fb($('#m4f2'),'bad', c.textContent.includes('ONT')?'❌ Trocar equipamento sem medir é chute. O teste no cabo já provou que o plano entrega — o gargalo é o rádio.':'❌ Falso e péssimo atendimento: no cabo o plano entrega ~94%. A explicação honesta é o limite do Wi-Fi 2,4 GHz.'); }
+    };
+  });
+}
+
+/* ============ MISSÃO 5: OSI ============ */
+const OSI = [
+  ['7 · Aplicação','HTTP, DNS, SMTP','#8e44ad'],['6 · Apresentação','TLS, codificação','#9b59b6'],
+  ['5 · Sessão','diálogos, sessões','#af7ac5'],['4 · Transporte','TCP, UDP, portas','#2a6fdb'],
+  ['3 · Rede','IP, roteadores','#1f9d55'],['2 · Enlace','Ethernet, MAC, switch, VLAN','#e8a13a'],
+  ['1 · Física','fibra, luz, bits, conectores','#d64545']];
+const TCPIP = [
+  ['Aplicação','HTTP, DNS, TLS…','#8e44ad'],['Transporte','TCP, UDP','#2a6fdb'],
+  ['Internet','IP, ICMP','#1f9d55'],['Acesso à rede','Ethernet + física','#e8a13a']];
+const ENCAP = [
+  ['DADOS','#8e44ad','Camada de <b>Aplicação</b>: o navegador montou uma requisição HTTP. Por enquanto são só dados.'],
+  ['TCP','#2a6fdb','<b>Transporte</b>: ganhou cabeçalho TCP (portas, sequência). Agora é um <b>segmento</b>.'],
+  ['IP','#1f9d55','<b>Rede</b>: ganhou cabeçalho IP (origem/destino). Agora é um <b>pacote</b> — é o que o roteador olha.'],
+  ['ETH','#e8a13a','<b>Enlace</b>: ganhou cabeçalho Ethernet (MACs) — e a tag da sua VLAN! Agora é um <b>quadro</b> — é o que o switch olha.'],
+  ['〰️ LUZ','#d64545','<b>Física</b>: virou pulsos de luz a 1310 nm subindo pelo drop que você instalou. LOS vermelho? É <i>exatamente</i> esta camada que falhou.']];
+const DITEMS = [
+  ['HTTP',0],['DNS',0],['TLS',0],['TCP',1],['UDP',1],['IP',2],['ICMP (ping)',2],['Roteador',2],
+  ['Ethernet / MAC',3],['Switch / VLAN',3],['Fibra e conector APC',3],['Wi-Fi (rádio)',3]];
+let m5;
+function initM5(){
+  m5 = {enc:0, sel:null, placed:0, errors:0, quizDone:false};
+  $('#m5stage').innerHTML = `
+  <div class="osi-cols">
+    <div><h3 class="disp">Modelo OSI (7)</h3><div class="layer-stack" style="margin-top:8px">${OSI.map(l=>`<div class="layer" style="background:${l[2]}">${l[0]}<small>${l[1]}</small></div>`).join('')}</div></div>
+    <div><h3 class="disp">Modelo TCP/IP (4)</h3><div class="layer-stack" style="margin-top:8px">
+      <div class="layer" style="background:${TCPIP[0][2]};flex:1.7;min-height:118px">Aplicação<small>cobre 7+6+5 do OSI</small></div>
+      <div class="layer" style="background:${TCPIP[1][2]}">Transporte<small>TCP, UDP</small></div>
+      <div class="layer" style="background:${TCPIP[2][2]}">Internet<small>IP, ICMP</small></div>
+      <div class="layer" style="background:${TCPIP[3][2]};min-height:78px">Acesso à rede<small>enlace + física</small></div>
+    </div></div>
+  </div>
+  <div class="encap-stage">
+    <h3 class="disp">▶ Veja o encapsulamento acontecer</h3>
+    <p style="font-size:.85rem;color:var(--ink-soft);margin-top:4px">Maria abriu um site. Acompanhe os dados descendo a pilha, ganhando um "envelope" por camada:</p>
+    <div class="pdu" id="pduBox"><div class="hdr" style="background:#8e44ad">DADOS</div></div>
+    <div class="encap-caption" id="encCap">Toque em "Descer uma camada" para começar.</div>
+    <div style="text-align:center"><button class="btn" id="encBtn">⬇ Descer uma camada</button></div>
+  </div>
+  <div id="m5game"></div>`;
+  $('#encBtn').onclick = e=>{
+    m5.enc++;
+    if(m5.enc<ENCAP.length){
+      const [tag,color,cap] = ENCAP[m5.enc];
+      const h = document.createElement('div'); h.className='hdr'; h.style.background=color; h.textContent=tag;
+      $('#pduBox').prepend(h);
+      $('#encCap').innerHTML = cap;
+      if(m5.enc===ENCAP.length-1){
+        $('#encBtn').textContent='✔ Chegou na fibra!'; $('#encBtn').disabled=true;
+        addXP(25,e); setTimeout(m5Game,700);
+      }
+    }
+  };
+}
+function m5Game(){
+  $('#m5game').innerHTML = `
+  <h3 class="disp" style="margin-top:22px">🎯 Desafio: cada coisa na sua camada</h3>
+  <p style="font-size:.88rem;color:var(--ink-soft)">Toque num item e depois na camada TCP/IP onde ele mora:</p>
+  <div class="dragitems" id="dItems">${DITEMS.map((d,i)=>`<button class="ditem" data-i="${i}">${d[0]}</button>`).join('')}</div>
+  <div class="layer-stack tcp-targets" id="dTargets">${TCPIP.map((l,i)=>
+    `<div class="layer" data-l="${i}" style="background:${l[2]}"><span>${l[0]}<small style="display:block">${l[1]}</small></span><span class="placedlist"></span></div>`).join('')}</div>
+  <div class="feedback" id="m5f"></div>`;
+  document.querySelectorAll('#dItems .ditem').forEach(b=>{
+    b.onclick = ()=>{ document.querySelectorAll('.ditem').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); m5.sel=+b.dataset.i;
+      document.querySelectorAll('#dTargets .layer').forEach(t=>t.classList.add('drop-ok')); };
+  });
+  document.querySelectorAll('#dTargets .layer').forEach(t=>{
+    t.onclick = e=>{
+      if(m5.sel===null||m5.sel===undefined) return;
+      const item = DITEMS[m5.sel];
+      const btn = document.querySelector('.ditem[data-i="'+m5.sel+'"]');
+      if(+t.dataset.l===item[1]){
+        btn.classList.add('placed'); btn.classList.remove('sel');
+        const sp=document.createElement('span'); sp.textContent=item[0]; t.querySelector('.placedlist').appendChild(sp);
+        m5.placed++; addXP(10,e);
+        fb($('#m5f'),'ok','✅ <b>'+item[0]+'</b> mora em <b>'+TCPIP[item[1]][0]+'</b>. '+(m5.placed===DITEMS.length?'Tudo classificado!':'Faltam '+(DITEMS.length-m5.placed)+'.'));
+        if(m5.placed===DITEMS.length) m5Finish();
+      } else {
+        m5.errors++;
+        fb($('#m5f'),'bad','❌ <b>'+item[0]+'</b> não fica em '+TCPIP[+t.dataset.l][0]+'. Dica: pense no que o equipamento/protocolo "enxerga" — MAC? IP? portas? conteúdo?');
+      }
+      m5.sel=null; document.querySelectorAll('#dTargets .layer').forEach(x=>x.classList.remove('drop-ok'));
+      document.querySelectorAll('.ditem').forEach(x=>x.classList.remove('sel'));
+    };
+  });
+}
+function m5Finish(){
+  completeMission('m5');
+  const d=document.createElement('div');
+  d.innerHTML = `<div class="feedback show ok">🏅 <b>Badge: Senhor das Camadas!</b> ${m5.errors===0?'Gabaritou sem errar — impressionante!':'Você acertou tudo (com '+m5.errors+' tentativa(s) extra(s) no caminho — é assim que se aprende).'}<br><br>
+  <b>O mapa mental do técnico:</b> LOS = física · PON piscando = enlace/autorização · sem IP = rede (PPPoE/RADIUS) · site não abre mas ping vai = aplicação/DNS. Diagnóstico sempre de baixo para cima.</div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn gold" onclick="openMission('m6')">🎧 Missão final: plantão →</button>
+    <button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+  $('#m5game').appendChild(d);
+}
+
+/* ============ MISSÃO 6: PLANTÃO ============ */
+const TICKETS = [
+  {sym:'"Tá tudo apagado de internet, só a luzinha vermelha piscando!"',
+   leds:{power:'on-g',pon:'off',los:'on-r',net:'off'}, rx:'sem leitura',
+   layer:3, act:1,
+   acts:['Trocar a ONT por uma nova','Inspecionar fibra: conector APC na ONT, drop (dobras/rompimento) e porta na CTO','Resetar a senha do PPPoE'],
+   exp:'LOS vermelho + sem leitura de Rx = não chega luz. Camada 1: conector, drop dobrado/rompido, CTO. Trocar ONT ou mexer em senha não traz a luz de volta.'},
+  {sym:'"Instalei a ONT que comprei na internet e ela não conecta. A luz PON fica piscando sem parar."',
+   leds:{power:'on-g',pon:'blinky',los:'off',net:'off'}, rx:'−14,2 dBm',
+   layer:1, act:0,
+   acts:['Verificar na OLT: a ONT aparece no autofind mas não está autorizada (SN fora da base)','Trocar o drop inteiro','Pedir para o cliente reiniciar o celular'],
+   exp:'Rx saudável + PON piscando = a luz chega, mas a OLT não autorizou aquele SN. É autorização/provisionamento (enlace), não fibra. ONT não homologada pode nem ser aceita.'},
+  {sym:'"As luzes PON e Power estão fixas, mas a de Internet está apagada e nada navega."',
+   leds:{power:'on-g',pon:'on-g',los:'off',net:'off'}, rx:'−12,8 dBm',
+   layer:0, act:2,
+   acts:['Despachar técnico para trocar o conector','Medir a fibra com OTDR','Verificar a sessão PPPoE: credenciais no RADIUS (senha alterada? cadastro bloqueado?)'],
+   exp:'PON fixo = camadas 1 e 2 ok. Internet apagado = não subiu IP: é o PPPoE/RADIUS (camada de rede). Mexer na fibra com −12,8 dBm seria desperdiçar visita.'},
+  {sym:'"De manhã funciona, mas toda tarde quente a internet cai!" — Rx agora: −26 dBm e piorando.',
+   leds:{power:'on-g',pon:'on-g',los:'off',net:'on-g'}, rx:'−26 dBm ⚠ (era −18 na instalação)',
+   layer:3, act:1,
+   acts:['Trocar a ONT, que deve estar esquentando','Inspecionar o drop: o sol dilata o cabo e revela macrobending (dobra apertada) — refazer o lance/fixação','Aumentar a potência do Wi-Fi'],
+   exp:'Rx limítrofe que piora com o calor é assinatura de macrobending no drop: o cabo esquenta, a dobra aperta, a perda cresce. Leve fibra e abraçadeira — não outra ONT.'},
+  {sym:'"No quarto dos fundos o Wi-Fi fica horrível, mas na sala voa." Rx: −13 dBm, tudo navegando na sala.',
+   leds:{power:'on-g',pon:'on-g',los:'off',net:'on-g'}, rx:'−13,1 dBm',
+   layer:3, act:0,
+   acts:['É alcance do rádio Wi-Fi: reposicionar a ONT/roteador ou indicar mesh/repetidor','Reprovisionar a ONT na OLT com outro perfil','Trocar o drop por um de melhor qualidade'],
+   exp:'A fibra está perfeita (−13 dBm) e a sala navega. O problema é a propagação do rádio Wi-Fi (camada física do ar, não da fibra): paredes atenuam. Mesh resolve; OLT e drop não têm nada a ver.'},
+];
+const LAYERNAMES = ['Rede (IP/PPPoE)','Enlace (autorização/VLAN)','—','Física (fibra/luz/rádio)'];
+let m6;
+function initM6(){
+  m6 = {order:[...TICKETS].sort(()=>Math.random()-.5), i:0, score:[]};
+  m6Render();
+}
+function m6Render(){
+  if(m6.i>=m6.order.length){ m6End(); return; }
+  const t = m6.order[m6.i];
+  const ledmap = {on:'on-g'};
+  $('#m6stage').innerHTML = `
+  <div class="scorebar">${m6.order.map((_,i)=>`<i class="${m6.score[i]===true?'hit':m6.score[i]===false?'miss':''}"></i>`).join('')}</div>
+  <div class="ticket">
+    <span class="tnum">CHAMADO #${1000+m6.i+1} · ${m6.i+1} de ${m6.order.length}</span>
+    <h4>📞 ${t.sym}</h4>
+    <div class="ledrow">
+      <span><i class="${t.leds.power}"></i>POWER</span>
+      <span><i class="${t.leds.pon==='off'?'off':t.leds.pon}"></i>PON</span>
+      <span><i class="${t.leds.los==='off'?'off':t.leds.los}"></i>LOS</span>
+      <span><i class="${t.leds.net==='off'?'off':t.leds.net}"></i>INTERNET</span>
+      <span>📟 Rx: <b style="margin-left:4px">${t.rx}</b></span>
+    </div>
+  </div>
+  <p style="margin-top:14px;font-size:.9rem"><b>1) Em qual camada está o problema?</b></p>
+  <div class="choices" id="m6layers">
+    <button class="choice" data-l="3">⚡ Física — luz, fibra, conectores, rádio</button>
+    <button class="choice" data-l="1">🔗 Enlace — autorização na OLT, VLAN, MAC</button>
+    <button class="choice" data-l="0">🌐 Rede — IP, PPPoE, RADIUS</button>
+  </div>
+  <div class="feedback" id="m6f1"></div>
+  <div id="m6act"></div>`;
+  let layerOK = null;
+  $('#m6layers').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = ()=>{
+      $('#m6layers').querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+      layerOK = (+c.dataset.l===t.layer);
+      c.classList.add(layerOK?'right':'wrong');
+      if(!layerOK){
+        const right = $('#m6layers').querySelector('.choice[data-l="'+t.layer+'"]');
+        if(right) right.classList.add('right');
+        fb($('#m6f1'),'bad','A camada certa era <b>'+LAYERNAMES[t.layer]+'</b>. Leia os LEDs de baixo para cima: LOS → PON → Internet.');
+      } else fb($('#m6f1'),'ok','Camada certa! Agora, a ação:');
+      m6Act(t, layerOK);
+    };
+  });
+}
+function m6Act(t, layerOK){
+  $('#m6act').innerHTML = `
+  <p style="margin-top:14px;font-size:.9rem"><b>2) Qual a ação correta?</b></p>
+  <div class="choices">${t.acts.map((a,i)=>`<button class="choice" data-i="${i}">${a}</button>`).join('')}</div>
+  <div class="feedback" id="m6f2"></div>`;
+  $('#m6act').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      $('#m6act').querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+      const ok = (+c.dataset.i===t.act);
+      c.classList.add(ok?'right':'wrong');
+      if(!ok){ const right=$('#m6act').querySelector('.choice[data-i="'+t.act+'"]'); if(right) right.classList.add('right'); }
+      const full = ok && layerOK;
+      m6.score[m6.i] = full;
+      if(full) addXP(30,e); else if(ok||layerOK) addXP(10,e);
+      fb($('#m6f2'), full?'ok':(ok?'info':'bad'),
+        (full?'✅ Diagnóstico completo! ':'')+'🧠 '+t.exp);
+      nextBtn('#m6act',()=>{ m6.i++; m6Render(); }, m6.i+1<m6.order.length?'Próximo chamado →':'Ver resultado →');
+    };
+  });
+}
+function m6End(){
+  const hits = m6.score.filter(Boolean).length;
+  const passed = hits>=4;
+  if(passed) completeMission('m6');
+  $('#m6stage').innerHTML = `
+  <div class="scorebar">${m6.score.map(s=>`<i class="${s?'hit':'miss'}"></i>`).join('')}</div>
+  <div class="feedback show ${passed?'ok':'info'}" style="display:block;margin-top:16px">
+    ${passed?'🏅 <b>Badge: Caçador de Falhas!</b> ':''}Você fechou <b>${hits} de ${m6.score.length}</b> chamados com diagnóstico completo (camada + ação).
+    ${passed?'Plantão encerrado com louvor — o cliente nem sabe o quanto você economizou em visitas desnecessárias.':'Quase! Acerte 4 de 5 para ganhar o badge. Releia a regra de ouro: LOS → PON → Internet, de baixo para cima.'}</div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn gold" onclick="initM6()">↺ Novo plantão (chamados embaralhados)</button>
+    <button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+}
+
+/* ============ PROVA DE CERTIFICAÇÃO ============ */
+/* tipos: mc {opts, ok} · tf {ok:true/false} · num {ans, tol, unit} · order {items na ordem correta} */
+const EXAM = [
+{id:'p1', parte:'Parte I', nome:'Fundamentos e Modelos', topics:'Comutação, banda × latência, OSI/TCP-IP, topologias, meios, BDP', qs:[
+ {t:'mc', q:'A internet (e a rede do provedor) é comutada por…', opts:['Circuitos: cada cliente reserva um caminho dedicado','Pacotes: a informação é fatiada e compartilha o meio sob demanda','Frequências: cada cliente recebe uma portadora exclusiva'], ok:1, exp:'Comutação de pacotes é eficiente (compartilhamento estatístico), ao custo de variabilidade: atraso, jitter e perda — que as camadas superiores domam.'},
+ {t:'tf', q:'Um enlace pode ter banda altíssima e, ainda assim, latência péssima (ex.: satélite).', ok:true, exp:'Banda e latência são independentes. A propagação tem limite físico: ~5 µs/km na fibra — nenhuma banda reduz a distância.'},
+ {t:'num', q:'Tempo MÍNIMO (ideal, sem overhead) para baixar 500 MB num link de 500 Mbps. Lembre: 1 byte = 8 bits.', ans:8, tol:0.5, unit:'segundos', exp:'500 MB × 8 = 4000 Mb ÷ 500 Mbps = 8 s. Confundir bits com bytes é o erro clássico do suporte.'},
+ {t:'mc', q:'Qual componente da latência é IRREDUTÍVEL com mais banda?', opts:['Enfileiramento (filas no congestionamento)','Transmissão (tamanho ÷ banda)','Propagação (distância ÷ velocidade da luz no meio)'], ok:2, exp:'Propagação só cai aproximando o conteúdo: CDN de borda e peering no IX local. As outras melhoram com capacidade/QoS.'},
+ {t:'num', q:'BDP: vazão máxima de UMA conexão TCP com janela de 64 KB (65536 bytes) e RTT de 80 ms, em Mbps. (Janela ÷ RTT)', ans:6.55, tol:0.6, unit:'Mbps', exp:'65536 × 8 ÷ 0,080 ≈ 6,55 Mbps por conexão. Por isso cliente de 300M vê poucos Mbps de um servidor distante de fluxo único.'},
+ {t:'mc', q:'A PON é fisicamente uma árvore (OLT → splitters → ONTs). Logicamente ela é…', opts:['Ponto a ponto dedicado por cliente','Ponto-multiponto compartilhado: todas as ONTs ouvem o mesmo downstream','Um anel com dois sentidos'], ok:1, exp:'Topologia física ≠ lógica. O downstream é broadcast para todas as ONTs; o upstream é arbitrado por tempo (TDMA).'},
+ {t:'mc', q:'Regra de capacidade do manual: dimensione uplinks e portas PON para ficar em até…', opts:['100% no pico — capacidade parada é desperdício','70–80% no pico — acima disso a latência dispara (bufferbloat)','50% sempre, por norma'], ok:1, exp:'Perto da saturação as filas enchem e a latência explode (bufferbloat) — o cliente sente lentidão mesmo com banda média sobrando.'},
+ {t:'order', q:'Ordene as redes da MENOR para a MAIOR abrangência geográfica:', items:['PAN (Bluetooth)','LAN (casa/POP)','MAN (cidade)','WAN (regional/nacional)'], exp:'PAN → LAN → MAN → WAN. Para o ISP, o corte prático é acesso (PON/rádio) vs. núcleo (anéis MAN/WAN).'}
+]},
+{id:'p2', parte:'Parte II', nome:'Camada Física e Fibra', topics:'Reflexão total, dB, janelas, dispersão, conectores APC/UPC, fusão', qs:[
+ {t:'mc', q:'Por que a luz não escapa do núcleo da fibra?', opts:['O vidro é espelhado por fora','Reflexão interna total: acima do ângulo crítico, a luz reflete de volta na fronteira núcleo–casca','A capa amarela absorve a luz que vaza'], ok:1, exp:'Núcleo com índice maior + casca com índice menor: acima do ângulo crítico há reflexão interna total — a luz "quica" por quilômetros.'},
+ {t:'mc', q:'Perder −3 dB significa que a potência…', opts:['Caiu 3%','Caiu pela metade','Caiu para um décimo'], ok:1, exp:'dB é escala logarítmica: −3 dB = metade; −10 dB = um décimo. E perdas em dB simplesmente SOMAM — a base do orçamento de potência.'},
+ {t:'mc', q:'Qual comprimento de onda tem a MENOR atenuação na fibra (e por isso é usado em backbone/DWDM)?', opts:['1310 nm (~0,33 dB/km)','1490 nm (~0,28 dB/km)','1550 nm (~0,20 dB/km)'], ok:2, exp:'1550 nm é a 3ª janela: ~0,20 dB/km. GPON usa 1490 (down) e 1310 (up), reservando 1550 para overlay/backbone.'},
+ {t:'num', q:'Atenuação de um enlace de 12 km em 1490 nm (0,28 dB/km) com 2 conectores (0,4 dB cada) e 3 fusões (0,08 dB cada). Total em dB:', ans:4.4, tol:0.25, unit:'dB', exp:'12×0,28 = 3,36 + 0,8 + 0,24 ≈ 4,4 dB. É assim que se sabe se o enlace fecha ANTES de ir a campo.'},
+ {t:'tf', q:'Pode-se conectar um conector SC/APC (verde) com um SC/UPC (azul) sem problema.', ok:false, exp:'NUNCA: as faces (angulada 8° × reta) não casam — perda e reflexão disparam e o ferrolho pode ser danificado. Verde só com verde.'},
+ {t:'order', q:'Ordene as 5 etapas da fusão de fibra:', items:['Decapar e limpar','Clivar a 90°','Alinhar na fusora','Fundir (arco elétrico)','Proteger com tubete e acomodar'], exp:'A CLIVAGEM a 90° é o fator nº 1 da perda final. Meta de campo: ≤ 0,1 dB por fusão (refazer acima disso em rede primária).'},
+ {t:'mc', q:'Fibra para o DROP e o intradomiciliar (tolera curvas fechadas):', opts:['G.652.D (SMF padrão de tronco)','G.657 (bend-insensitive)','OM4 multimodo aqua'], ok:1, exp:'G.657.A1/A2 é insensível a curvatura — reduz macrobending no drop. G.652.D fica no tronco; multimodo só em patch curto interno.'},
+ {t:'mc', q:'A causa nº 1 de perda anômala em conector óptico é…', opts:['Sujeira no ferrolho — inspecione e limpe antes de trocar qualquer coisa','Polimento de fábrica defeituoso','Comprimento de onda errado do laser'], ok:0, exp:'Uma partícula de poeira bloqueia fração enorme do núcleo de 9 µm. Microscópio + caneta de limpeza é o conserto mais barato que existe.'}
+]},
+{id:'p3', parte:'Parte III', nome:'Camada de Enlace', topics:'MAC, quadro Ethernet, switch, ARP, VLAN 802.1Q, Q-in-Q, STP', qs:[
+ {t:'mc', q:'Os primeiros 24 bits de um endereço MAC (OUI) identificam…', opts:['A VLAN do quadro','O fabricante da interface','O país de origem'], ok:1, exp:'O OUI revela o fabricante — diagnóstico grátis: dá para saber se o MAC na OLT é da ONT homologada ou de um roteador estranho.'},
+ {t:'mc', q:'Um switch recebe um quadro para um MAC que NÃO está na tabela. O que ele faz?', opts:['Descarta o quadro','Flooding: envia em todas as portas da VLAN, menos a de entrada','Pergunta ao roteador via ARP'], ok:1, exp:'Switch aprende pelo MAC de ORIGEM e faz flooding do desconhecido. Broadcast (FF:FF:…) também vai a toda a VLAN.'},
+ {t:'mc', q:'"MAC flapping" (mesmo MAC pulando entre portas) no log do switch indica quase sempre…', opts:['Cliente trocou de plano','Loop de camada 2 — alarme vermelho','Firmware desatualizado'], ok:1, exp:'MAC flapping é a assinatura do loop L2. O STP existe exatamente para bloquear laços antes da broadcast storm.'},
+ {t:'tf', q:'O quadro Ethernet tem um campo TTL que evita loops, igual ao IP.', ok:false, exp:'A camada 2 NÃO tem TTL: um quadro em laço circula para sempre, multiplicando broadcasts — por isso loop L2 derruba a rede em segundos e o STP é vital.'},
+ {t:'mc', q:'No ARP, a pergunta ("quem tem o IP X?") e a resposta viajam, respectivamente, como…', opts:['Broadcast e unicast','Unicast e broadcast','Multicast e multicast'], ok:0, exp:'Request em broadcast (todos ouvem), reply em unicast. Para destino em OUTRA rede, faz-se ARP do gateway, não do destino.'},
+ {t:'mc', q:'No Q-in-Q (802.1ad), a S-VLAN e a C-VLAN são, respectivamente…', opts:['VLAN do switch e VLAN do cliente final','Tag externa do provedor e tag interna do cliente','Duas VLANs aleatórias para redundância'], ok:1, exp:'S-VLAN (externa, do provedor) empilha sobre a C-VLAN (do cliente): isola, rastreia e escala além de 4094. Custo: +4 bytes por tag no MTU.'},
+ {t:'mc', q:'No anel metropolitano de backbone, em vez de STP/RSTP usa-se preferencialmente…', opts:['ERPS (G.8032), reconvergência < 50 ms','RIP, pela simplicidade','Hub passivo, que não forma loop'], ok:0, exp:'STP leva segundos (RSTP 1–6 s); ERPS/proteção óptica reconverge em < 50 ms — ninguém percebe o rompimento.'},
+ {t:'mc', q:'Quantos bits tem o VID da tag 802.1Q e qual a faixa útil?', opts:['8 bits, 1–255','12 bits, 1–4094','16 bits, 1–65535'], ok:1, exp:'VID de 12 bits → 4094 VLANs úteis. É essa escassez que motiva o Q-in-Q no provedor.'}
+]},
+{id:'p4', parte:'Parte IV', nome:'Rede e Endereçamento IP', topics:'TTL, MTU/PPPoE, CIDR/VLSM, CGNAT, IPv6, ICMP, roteamento', qs:[
+ {t:'mc', q:'Quando o TTL de um pacote chega a zero, o roteador…', opts:['Reenvia com TTL renovado','Descarta e devolve um ICMP Time Exceeded à origem','Guarda o pacote numa fila de espera'], ok:1, exp:'É exatamente esse ICMP que o traceroute explora: TTL 1, 2, 3… e cada roteador "se denuncia".'},
+ {t:'mc', q:'Cliente PPPoE reclama: "quase tudo navega, mas alguns sites travam ao carregar". Causa clássica e correção:', opts:['DNS lento → trocar para DNS público','MTU 1492 + PMTUD quebrado → MSS clamping no BNG','Vírus no computador → formatar'], ok:1, exp:'PPPoE rouba 8 bytes (MTU 1492). Se o ICMP Fragmentation Needed é filtrado, pacotes grandes somem. MSS clamping (ex.: 1452) resolve.'},
+ {t:'num', q:'Quantos hosts UTILIZÁVEIS tem uma sub-rede /26? (2^(32−prefixo) − 2)', ans:62, tol:0, unit:'hosts', exp:'2^6 = 64 endereços − rede − broadcast = 62. Tabela de bolso: /25=126, /26=62, /27=30, /28=14, /29=6, /30=2.'},
+ {t:'mc', q:'O endereço 192.168.10.37/26 pertence à rede…', opts:['192.168.10.0','192.168.10.32','192.168.10.64'], ok:0, exp:'Número mágico: 256−192 = 64 → redes em .0, .64, .128, .192. Maior múltiplo ≤ 37 é 0. Broadcast: .63; hosts .1–.62.'},
+ {t:'mc', q:'O bloco reservado especificamente para CGNAT (RFC 6598) é…', opts:['10.0.0.0/8','100.64.0.0/10','172.16.0.0/12'], ok:1, exp:'100.64.0.0/10 existe para o ISP endereçar assinantes atrás do CGNAT SEM colidir com o 10/8 e o 192.168 que o cliente já usa em casa.'},
+ {t:'mc', q:'Regra de ouro do VLSM ao recortar um bloco:', opts:['Aloque do MENOR para o maior, para sobrar espaço','Aloque do MAIOR para o menor, evitando fragmentação e sobreposição','A ordem não importa se houver documentação'], ok:1, exp:'Começar pelos /30 fragmenta o espaço e o /25 grande não cabe mais. Maior primeiro, sempre — e registre no IPAM.'},
+ {t:'mc', q:'Sumarizar 192.168.0.0/24, .1.0/24, .2.0/24 e .3.0/24 resulta em…', opts:['192.168.0.0/22','192.168.0.0/23','192.168.0.0/21'], ok:0, exp:'Os 4 blocos compartilham os primeiros 22 bits → /22 (1024 endereços). Uma rota agregada no BGP em vez de quatro.'},
+ {t:'tf', q:'Para economizar endereços IPv6, é recomendável usar /120 na LAN do cliente.', ok:false, exp:'A LAN é SEMPRE /64 — o SLAAC exige. Em IPv6 a conta é de prefixos, não de hosts: /32 do ISP → /48 por POP → /56 por assinante (DHCPv6-PD) → /64 por LAN.'},
+ {t:'num', q:'CGNAT: reservando blocos de 2048 portas por assinante, quantos clientes cabem num IPv4 público (~64512 portas úteis)?', ans:31, tol:1, unit:'clientes/IP', exp:'64512 ÷ 2048 ≈ 31. Mais clientes/IP economiza IPv4 mas aumenta port exhaustion — apps modernos abrem centenas de conexões.'},
+ {t:'mc', q:'Pacote para 10.20.5.7; a tabela tem rotas 10.0.0.0/8, 10.20.0.0/16 e 10.20.5.0/24. Qual vence?', opts:['/8 — foi aprendida primeiro','/16 — métrica intermediária','/24 — longest prefix match: a mais específica'], ok:2, exp:'Sempre vence o prefixo mais longo (mais específico). A default 0.0.0.0/0 só pega o que nada mais casa.'}
+]},
+{id:'p5', parte:'Parte V', nome:'Transporte e Aplicação', topics:'TCP/UDP, portas, DNS, DHCP/DORA, HTTPS/TLS, QoS', qs:[
+ {t:'order', q:'Ordene o 3-way handshake do TCP:', items:['SYN (cliente propõe)','SYN-ACK (servidor aceita)','ACK (cliente confirma)'], exp:'Cada conexão nova "paga" um RTT só para abrir (+ o do TLS). Por isso latência alta dói tanto no TCP.'},
+ {t:'mc', q:'Voz e vídeo ao vivo usam UDP porque…', opts:['UDP é criptografado por padrão','Chegar NA HORA vale mais que chegar completo — retransmitir voz atrasada é inútil','UDP tem mais banda que TCP'], ok:1, exp:'UDP: 8 bytes de cabeçalho, sem conexão nem retransmissão. Perda mata TCP (vazão); jitter/perda matam UDP de tempo real.'},
+ {t:'mc', q:'Associe: DNS, HTTPS e SSH usam, respectivamente, as portas…', opts:['80, 8080 e 21','53, 443 e 22','25, 110 e 23'], ok:1, exp:'53 (DNS, majoritariamente UDP), 443 (HTTPS — e o QUIC/HTTP3 em UDP/443!) e 22 (SSH). Decore as bem-conhecidas.'},
+ {t:'mc', q:'O servidor DNS que o ISP OPERA para seus assinantes é o…', opts:['Autoritativo: dono da verdade das zonas','Recursivo (cache): pergunta raiz → TLD → autoritativo e guarda a resposta','Raiz: o topo da hierarquia'], ok:1, exp:'Recursivo rápido e redundante perto do cliente é diferencial de qualidade — quando o DNS do ISP cai, "a internet caiu" para o cliente.'},
+ {t:'order', q:'Ordene as mensagens do processo DHCP (DORA):', items:['Discover (broadcast: alguém me dá config?)','Offer (servidor oferece um IP)','Request (cliente escolhe e pede)','Ack (servidor confirma + lease)'], exp:'O Discover é broadcast (cliente sem IP) — por isso existe o DHCP Relay para alcançar o servidor central através das VLANs.'},
+ {t:'mc', q:'A Opção 82 do DHCP serve para…', opts:['Definir o tempo de lease','Identificar a porta/VLAN/circuito físico de origem do pedido — base do IPoE rastreável e anti-fraude','Entregar o servidor NTP'], ok:1, exp:'O relay (OLT/switch) carimba a origem física. Com DHCP Snooping + DAI, mata IP/ARP spoofing no acesso.'},
+ {t:'mc', q:'Com HTTPS dominante, o que o ISP consegue ver do tráfego do cliente?', opts:['URL completa e conteúdo das páginas','Apenas IP de destino, SNI (nome do site) e volume/tempo','Nada, nem o destino'], ok:1, exp:'TLS cifra conteúdo e URL. Por isso cache transparente morreu — o ganho real vem de CDN/cache de borda autorizado (Open Connect, GGC) no POP/IX.'},
+ {t:'mc', q:'No QoS, a diferença entre policing e shaping:', opts:['Policing DESCARTA/remarca o excesso; shaping ATRASA (bufferiza) para suavizar','Policing é para upload, shaping para download','São sinônimos'], ok:0, exp:'Policing impõe o plano (rígido); shaping suaviza picos em uplinks. E lembre: QoS prioriza, mas NÃO cria banda.'}
+]},
+{id:'p6', parte:'Parte VI', nome:'Redes PON', topics:'FTTx, GPON/XGS-PON, OLT/ONT, splitters, orçamento, provisionamento', qs:[
+ {t:'mc', q:'A PON domina o acesso FTTH porque…', opts:['Entrega banda dedicada por cliente','O splitter passivo (sem energia) divide uma porta da OLT entre dezenas de clientes — custo imbatível','Usa cobre, mais barato que fibra'], ok:1, exp:'Sem eletrônica nem energia entre OLT e ONT. O custo: banda compartilhada na árvore e diagnóstico mais sutil.'},
+ {t:'mc', q:'No GPON, downstream e upstream funcionam, respectivamente, como…', opts:['TDMA e broadcast','Broadcast (1490 nm, com AES) e TDMA (1310 nm, slots agendados pelo DBA)','Dois pares de fibra separados'], ok:1, exp:'Todas as ONTs ouvem o mesmo downstream (por isso o AES é obrigatório); no upstream a OLT agenda slots — como o TDMA do rádio PtMP.'},
+ {t:'mc', q:'Por que o XGS-PON pode COEXISTIR com o GPON na mesma fibra?', opts:['Porque é do mesmo fabricante','Porque usa comprimentos de onda diferentes (1577/1270 vs 1490/1310) — basta um combiner WDM','Não pode coexistir'], ok:1, exp:'λ distintos permitem sobrepor XGS-PON (10G simétrico) à GPON existente e migrar clientes gradualmente, sem reconstruir planta.'},
+ {t:'tf', q:'Uma ONT GPON funciona normalmente numa OLT EPON.', ok:false, exp:'GPON (ITU-T) e EPON (IEEE) são padrões incompatíveis — órgãos, quadros e mecanismos diferentes. Escolha um ecossistema (no Brasil, GPON).'},
+ {t:'num', q:'Perda total de uma cascata de splitters 1:2 (3,5 dB) + 1:8 (10,5 dB), em dB:', ans:14, tol:0.3, unit:'dB', exp:'Perdas somam: 14 dB (vs 13,5 de um 1:16 único — a cascata perde 0,5 dB a mais, mas dá flexibilidade geográfica).'},
+ {t:'num', q:'Orçamento: OLT Classe C+ com Tx +5 dBm; perdas: fibra 2,24 + splitters 14,0 + conectores 1,6 + fusões 0,24 dB. Qual o P_Rx na ONT, em dBm? (use sinal negativo)', ans:-13.1, tol:0.4, unit:'dBm', exp:'+5 − 18,08 ≈ −13,1 dBm — na faixa saudável (−8 a −24). Margem de 3 dB no projeto é inegociável.'},
+ {t:'mc', q:'Classe óptica C+ do GPON oferece um orçamento de aproximadamente…', opts:['22 dB','28 dB (essa é a B+)','32 dB'], ok:2, exp:'B+ ≈ 28 dB, C+ ≈ 32 dB. Com 1:64 (21 dB de splitter), a classe define quanto sobra para fibra + conectores + margem.'},
+ {t:'order', q:'Ordene o fluxo de provisionamento de uma ONT nova:', items:['Descoberta pelo SN na OLT','Autorização (SN ↔ cliente/porta PON)','Aplicação dos perfis (line/service)','Mapeamento da C-VLAN (Q-in-Q)','PPPoE/IPoE autenticado no RADIUS','IP entregue + rate-limit do plano'], exp:'Esse é o caminho do "cabo plugado" ao "cliente navegando". Erro nº 1: VLAN errada — PON acende mas não navega.'},
+ {t:'mc', q:'Rx de −26 dBm numa ONT GPON é…', opts:['Faixa saudável','Limítrofe: perto da sensibilidade (−28), qualquer sujeira derruba','Impossível de medir'], ok:1, exp:'Saudável: −8 a −24. Limítrofe: −25 a −27. Abaixo de −27/−28: cai/instável. Rx que piora à tarde = macrobending no drop.'}
+]},
+{id:'p7', parte:'Parte VII', nome:'Planta Externa (OSP)', topics:'Cabos, drop, AS, postes, ferragens, reserva, certificação, documentação', qs:[
+ {t:'mc', q:'O cabo AS (autossustentado) se caracteriza por…', opts:['Precisar de cordoalha de aço separada','Ter elemento de tração próprio — vai de poste a poste sem cordoalha','Ser exclusivo para dutos subterrâneos'], ok:1, exp:'É o cavalo de batalha da rede aérea do ISP. O drop até a casa é G.657 (insensível a curvatura), o elo mais frágil da planta.'},
+ {t:'mc', q:'Por que se lança o tronco com 2–4× mais fibras que o necessário hoje?', opts:['Fibra sobrando aumenta a potência do sinal','O custo extra do cabo é pequeno perto do custo de RELANÇAR depois (obra, poste, trânsito)','Exigência da Anatel'], ok:1, exp:'Contagem = serviço atual + expansão + reserva técnica. Cabo sem sobra obriga nova obra a cada crescimento.'},
+ {t:'tf', q:'O ISP pode fixar seus cabos nos postes da concessionária sem contrato, desde que identifique com plaqueta.', ok:false, exp:'Contrato de compartilhamento é pré-requisito legal — ocupar sem acordo gera multa e remoção. E a zona de segurança da elétrica é questão de vida.'},
+ {t:'mc', q:'A reserva técnica (sobra de cabo em CEOs/CTOs e vãos) serve principalmente para…', opts:['Aumentar a atenuação de forma controlada','Refazer emendas e reparar rompimentos sem lançar cabo novo','Decorar o poste'], ok:1, exp:'Reserva é o que transforma um reparo de relançamento (obra) em um reparo de 1 hora (puxa, emenda, fecha).'},
+ {t:'mc', q:'Certificar um trecho recém-construído significa…', opts:['Tirar foto da CTO fechada','Medir a perda total (fonte + power-meter) E mapear eventos (OTDR), registrando o baseline','Confiar na estimativa da fusora'], ok:1, exp:'O baseline arquivado é o que permite, no futuro, sobrepor o traço atual e achar o evento NOVO em minutos.'},
+ {t:'mc', q:'O fator que MAIS influencia a perda de uma fusão é…', opts:['A marca da fusora','A clivagem a 90° (clivador calibrado, lâmina em dia)','A cor da fibra'], ok:1, exp:'Corte torto é a causa nº 1 de fusão ruim. Meta: ≤ 0,1 dB; em rede primária, refaça acima disso — afeta dezenas de clientes.'},
+ {t:'mc', q:'Sobre documentação/georreferenciamento, o manual afirma que…', opts:['É burocracia dispensável em ISP pequeno','Documentação desatualizada é PIOR que nenhuma — as-built obrigatório ao concluir cada obra','Basta planilha de clientes'], ok:1, exp:'A cadeia cliente ↔ CTO ↔ porta ↔ fibra ↔ ONT(SN) ↔ VLAN é o que faz o suporte responder em segundos "quem caiu e onde".'},
+ {t:'mc', q:'Qual a utilidade direta do georreferenciamento num rompimento de cabo?', opts:['Calcular o imposto do trecho','Converter a distância do OTDR em endereço real e listar exatamente quais clientes caíram','Substituir o OTDR'], ok:1, exp:'"Evento a 480 m" + rota do cabo no GIS = a esquina exata. E o impacto (quantos caíram) prioriza o reparo e a comunicação proativa.'}
+]},
+{id:'p8', parte:'Parte VIII', nome:'Medição e Diagnóstico Óptico', topics:'Power-meter, OTDR, VFL, gainer, dois λ, localização de falhas', qs:[
+ {t:'mc', q:'"Quanta potência chega NESTE ponto?" — qual instrumento responde?', opts:['OTDR','Power-meter (em dBm, no λ certo)','VFL'], ok:1, exp:'Power-meter no kit de TODO técnico: medir o Rx e comparar com o orçamento resolve a maioria dos chamados sem OTDR.'},
+ {t:'mc', q:'No traço do OTDR, um PICO seguido de degrau indica…', opts:['Fusão','Conector (ou emenda mecânica) — evento reflexivo','Curvatura'], ok:1, exp:'Assinaturas: fusão = degrau sem pico; conector/fim = pico reflexivo; splitter = degrau grande (~10,5 dB no 1:8); curvatura = degrau pior em 1550.'},
+ {t:'mc', q:'Um degrau que perde MUITO mais em 1550 nm do que em 1310 nm é…', opts:['Fusão ruim — refazer a emenda','Curvatura (macrobending) — procure cabo dobrado/prensado','Splitter desbalanceado'], ok:1, exp:'A perda por curvatura cresce com o λ; a fusão perde parecido nos dois. Medir em dois λ direciona o reparo certo.'},
+ {t:'mc', q:'O traço subiu num evento ("ganho"). O que é e o que fazer?', opts:['A fibra amplificou o sinal — ótimo','É o "gainer", artefato de fibras com retroespalhamento diferente: meça BIDIRECIONAL e use a média','Defeito do OTDR, troque o aparelho'], ok:1, exp:'Fibra só atenua — ganho é fisicamente impossível. A perda real da fusão é a média dos dois sentidos (A→B e B→A).'},
+ {t:'mc', q:'Para que serve o launch cable (bobina de lançamento) no OTDR?', opts:['Aumentar a potência do pulso','Jogar a ZONA MORTA para fora do trecho de interesse, enxergando os primeiros metros','Proteger o conector do OTDR'], ok:1, exp:'Após um evento reflexivo forte o OTDR fica "cego" (saturado). Sem launch cable você perde o primeiro conector/CTO perto do POP.'},
+ {t:'mc', q:'O VFL (caneta laser vermelha) é ideal para…', opts:['Medir a perda total do enlace em dB','Localizar visualmente quebra/dobra em trecho CURTO (drop/patch) e identificar a fibra certa','Substituir o OTDR em troncos de 20 km'], ok:1, exp:'650 nm visível: a luz VAZA e acende onde há quebra/dobra. Alcance curto, não mede perda — complemento, não substituto.'},
+ {t:'order', q:'Ordene o método de localização de falha do manual:', items:['Ler a potência Rx (ONT/OLT)','Comparar com orçamento/baseline','OTDR: localizar o evento novo','Converter distância em endereço (GIS)','Reparar, remedir e atualizar o baseline'], exp:'Camada 1 primeiro, sempre comparando medido × previsto. Trocar peças no escuro é o oposto de método.'},
+ {t:'mc', q:'Triagem: TODOS os clientes de uma mesma CTO caíram. A suspeita principal é…', opts:['As ONTs queimaram juntas','O trecho/splitter até aquela CTO (rede secundária)','O DNS do provedor'], ok:1, exp:'1 cliente = drop/ONT; uma CTO = secundária/splitter; uma PON inteira = primária/OLT. O padrão de quem caiu JÁ localiza.'}
+]},
+{id:'p9', parte:'Parte IX', nome:'Redes via Rádio', topics:'Propagação, FSPL, EIRP, Fresnel, PtP/PtMP, TDMA, SNR', qs:[
+ {t:'mc', q:'Subir a frequência (ex.: de 2,4 para 5 GHz ou 11 GHz) significa, em geral…', opts:['Mais alcance e mais penetração','Mais banda disponível, porém menos alcance e mais sensibilidade a obstáculos/chuva','Nenhuma mudança física'], ok:1, exp:'É o trade-off central do rádio. 5 GHz é o equilíbrio padrão do WISP; ≥11 GHz licenciado para backhaul de visada limpa.'},
+ {t:'num', q:'FSPL = 32,45 + 20·log10(d_km) + 20·log10(f_MHz). Calcule para 10 km em 5500 MHz, em dB:', ans:127.3, tol:1.5, unit:'dB', exp:'32,45 + 20 + 74,8 ≈ 127,3 dB. Essa perda gigante é compensada pelos ganhos das antenas (parabólicas de 25–30 dBi de cada lado).'},
+ {t:'mc', q:'EIRP é…', opts:['A potência do rádio sozinha','Potência do rádio + ganho da antena − perdas de cabo — e é ISSO que a Anatel limita','O ganho da antena em dBi'], ok:1, exp:'Trocar para uma antena de ganho maior AUMENTA a EIRP — pode estourar o limite legal mesmo sem mexer no rádio.'},
+ {t:'num', q:'Raio da 1ª zona de Fresnel: r = 17,32·√(d/(4f)), d em km, f em GHz. Enlace de 9 km em 5,5 GHz, em metros:', ans:11.1, tol:0.8, unit:'m', exp:'17,32·√(9/22) ≈ 11,1 m no meio do enlace. Recomendação: manter ≥ 60% da zona livre — visada óptica NÃO basta.'},
+ {t:'mc', q:'O enlace "funciona mas cai no vento/chuva". A causa nº 1 segundo o manual:', opts:['Falta de potência no rádio','Zona de Fresnel obstruída (vegetação/obstáculo encostando no elipsoide)','Cabo de rede ruim na torre'], ok:1, exp:'Ganhar ALTURA (liberar Fresnel) costuma resolver mais que aumentar EIRP — que ainda esbarra no limite da Anatel.'},
+ {t:'mc', q:'Por que o TDMA proprietário vence o Wi-Fi puro (CSMA/CA) no PtMP de longa distância?', opts:['Porque criptografa melhor','Porque elimina o problema do NÓ ESCONDIDO: a base agenda slots e ninguém colide','Porque usa frequência licenciada'], ok:1, exp:'Clientes que não se ouvem colidem na base com CSMA. O TDMA agenda — exatamente como a OLT faz no upstream da PON.'},
+ {t:'mc', q:'A SNR de um enlace de rádio determina diretamente…', opts:['A frequência de operação','Qual modulação o rádio sustenta (QPSK ↔ 256-QAM) e, portanto, a vazão','O tamanho da antena'], ok:1, exp:'SNR alta = modulação densa = mais Mbps. Por isso margem e canal limpo valem mais que potência bruta.'},
+ {t:'mc', q:'Margem de desvanecimento (fade margin) recomendada pelo manual para projetar enlaces:', opts:['0 dB — projete no limite para economizar','≥ 10–20 dB de folga para chuva, vegetação e interferência','≥ 60 dB sempre'], ok:1, exp:'Enlace "no talo" cai no primeiro temporal. Chuva, árvore que cresce e interferência nova comem a folga.'}
+]},
+{id:'p10', parte:'Parte X', nome:'Operação de Provedor', topics:'BNG, PPPoE/IPoE, RADIUS/AAA, CoA, BGP, trânsito/IX, monitoramento', qs:[
+ {t:'mc', q:'O BNG/BRAS é o equipamento que…', opts:['Divide a luz da fibra entre clientes','Termina a sessão do assinante: autentica (RADIUS), entrega IP, aplica o plano e roteia','Converte luz em Ethernet na casa'], ok:1, exp:'É o "pescoço" da operação — sua queda derruba todos os assinantes que ele termina. Redundância de BNG + RADIUS é obrigatória.'},
+ {t:'mc', q:'PPPoE vs IPoE — qual linha está CORRETA?', opts:['PPPoE: MTU 1500 / IPoE: MTU 1492','PPPoE: usuário/senha + sessão explícita, MTU 1492; IPoE: DHCP + Opção 82, MTU 1500','São idênticos no MTU e na autenticação'], ok:1, exp:'PPPoE dá controle/billing forte (e exige MSS clamping); IPoE é plug-and-play e combina melhor com IPTV/multicast.'},
+ {t:'mc', q:'Os três As do AAA são…', opts:['Acesso, Aprovação, Auditoria','Autenticação (quem é), Autorização (o que pode) e Accounting/Contabilização (o que usou)','Análise, Atribuição, Alarme'], ok:1, exp:'No ISP: usuário/senha do PPPoE; atributos de velocidade/IP//56; e os logs de sessão que sustentam billing e Marco Civil.'},
+ {t:'mc', q:'O cliente fez upgrade às 22h e quer a velocidade nova SEM reconectar. O recurso é…', opts:['Reiniciar o BNG','CoA (Change of Authorization, RFC 5176): o RADIUS muda a sessão ativa na hora','Trocar a ONT'], ok:1, exp:'CoA/Disconnect muda velocidade ou derruba sessão em tempo real. Inadimplente vai para walled garden (página de fatura), não para reject seco.'},
+ {t:'mc', q:'Diferença entre trânsito e peering no IX:', opts:['Trânsito é grátis; peering é pago por Mbps','Trânsito (pago) dá acesso à internet INTEIRA; peering no IX troca rotas LOCAIS com baixa latência e custo baixo','São a mesma coisa com nomes diferentes'], ok:1, exp:'Estratégia do manual: maximizar peering (IX.br), comprar trânsito para o resto — com ≥ 2 trânsitos por redundância.'},
+ {t:'mc', q:'Para preferir POR ONDE SAIR o tráfego (qual upstream usar), a alavanca BGP principal é…', opts:['Local Preference (maior vence)','TTL','MTU'], ok:0, exp:'Local Pref controla a saída; AS-Path prepending "afasta" um caminho para balancear a ENTRADA; communities sinalizam políticas.'},
+ {t:'mc', q:'RPKI/ROA serve para…', opts:['Acelerar a convergência do OSPF','Declarar quais ASNs podem originar seus prefixos — defesa contra route hijack','Comprimir a tabela BGP'], ok:1, exp:'Junto com filtros, max-prefix e sumarização, é a higiene básica: um anúncio BGP errado afeta a internet inteira.'},
+ {t:'mc', q:'NetFlow/sFlow (flow) responde principalmente…', opts:['A temperatura dos equipamentos','QUEM fala com QUEM e quanto — detecção de DDoS e planejamento de peering','A potência óptica das ONTs'], ok:1, exp:'SNMP dá métricas/traps; syslog dá eventos; flow dá a matriz de tráfego. Sem flow você descobre o DDoS pelo telefone tocando.'}
+]},
+{id:'p11', parte:'Parte XI', nome:'Segurança e Confiabilidade', topics:'Isolamento do acesso, BCP38, amplificação, Marco Civil, anel, DDoS', qs:[
+ {t:'mc', q:'O "pacote padrão" do manual para impedir cliente atacar cliente no acesso:', opts:['Antivírus corporativo em cada ONT','VLAN por cliente + DHCP Snooping + DAI (+ port security e AES na PON)','Bloquear todas as portas UDP'], ok:1, exp:'Isolar o domínio de broadcast mata o ARP spoofing entre vizinhos; Snooping+DAI barram DHCP/ARP forjados.'},
+ {t:'mc', q:'BCP38 / uRPF na borda impede que…', opts:['Clientes usem VPN','Pacotes com IP de ORIGEM forjado saiam da sua rede — sua rede não vira arma de DDoS refletido','O BGP anuncie rotas'], ok:1, exp:'Anti-spoofing protege a internet DE você (e sua reputação). Frequentemente exigido por upstreams e pelo IX.'},
+ {t:'mc', q:'Um resolvedor DNS aberto (open resolver) na sua rede é perigoso porque…', opts:['Consome muita energia','Vira refletor/amplificador de DDoS contra terceiros — pequenas consultas forjadas geram respostas enormes para a vítima','Deixa o DNS mais lento'], ok:1, exp:'DNS/NTP/SNMP abertos são munição de ataques volumétricos. Restrinja à sua base, aplique rate-limit (RRL).'},
+ {t:'mc', q:'O Marco Civil exige do ISP, na prática…', opts:['Bloquear redes sociais sob demanda','Guardar logs de conexão: quem usou qual IP/porta e quando — com NTP correto (RADIUS accounting + CGNAT por bloco de portas)','Inspecionar o conteúdo HTTPS dos clientes'], ok:1, exp:'Alocação de portas POR BLOCO no CGNAT reduz drasticamente o volume de log e mantém a rastreabilidade legal.'},
+ {t:'mc', q:'Disponibilidade de 99,9% ("três noves") equivale a uma indisponibilidade anual de cerca de…', opts:['~5 minutos','~52 minutos','~8,8 horas'], ok:2, exp:'99% ≈ 3,65 dias; 99,9% ≈ 8,8 h; 99,99% ≈ 52 min; 99,999% ≈ 5 min. Invista os "noves" onde o impacto (nº de afetados) é maior.'},
+ {t:'mc', q:'No anel óptico de backbone com ERPS, um rompimento de cabo é contornado em…', opts:['Menos de 50 ms — ninguém percebe','30 a 50 segundos','Algumas horas, após visita técnica'], ok:0, exp:'Rompimento é questão de QUANDO, não SE (retroescavadeira, poda). O anel reconverge pelo outro lado em milissegundos.'},
+ {t:'mc', q:'Sobre as técnicas de mitigação de DDoS:', opts:['RTBH preserva a vítima; Flowspec a sacrifica','RTBH descarta TUDO do IP-alvo (vítima offline, rede salva); Flowspec filtra por porta/protocolo (preserva); scrubbing limpa e devolve o legítimo','Scrubbing é sempre a primeira opção por ser grátis'], ok:1, exp:'Tenha a community de blackhole ACORDADA com o upstream ANTES do ataque — no meio de 50 Gbps não dá tempo de configurar.'},
+ {t:'tf', q:'Redundância que nunca foi testada pode ser considerada confiável.', ok:false, exp:'Failover não testado costuma falhar na hora H. Simule queda de trânsito, de BNG e de trecho do anel. E lembre: energia (nobreak+gerador) é a falha nº 1 disfarçada.'}
+]},
+{id:'p12', parte:'Parte XII', nome:'Tópicos Avançados', topics:'MPLS, L3VPN/VPLS, FRR, SDN/automação, IPv6 no ISP', qs:[
+ {t:'mc', q:'No MPLS, o caminho do pacote pelo núcleo é decidido…', opts:['Consultando o IP de destino em cada salto','Por RÓTULOS: o PE de entrada empilha, os P comutam só pelo rótulo, o PE de saída remove','Pelo endereço MAC'], ok:1, exp:'Push → swap → pop ao longo do LSP. Rótulos empilhados = um para o caminho, outro para o serviço/VPN.'},
+ {t:'mc', q:'Cliente quer interligar filiais ROTEADAS com tabela isolada (podendo até repetir endereçamento de outro cliente). O serviço é…', opts:['VPLS','L3VPN (VRF + MP-BGP)','Pseudowire simples'], ok:1, exp:'L3VPN dá VRF por cliente. VPLS emula um SWITCH distribuído (mesmo domínio L2 multiponto); VPWS é o "fio virtual" ponto a ponto.'},
+ {t:'mc', q:'O FRR (Fast Reroute) do MPLS protege o tráfego desviando o LSP em…', opts:['< 50 ms, por caminho de backup pré-calculado','Cerca de 30 segundos','Somente após intervenção manual'], ok:0, exp:'Resiliência de operadora: FRR + anel/ERPS + BFD mantêm o núcleo de pé sem o cliente notar.'},
+ {t:'mc', q:'Segundo o manual, o maior ganho IMEDIATO de "SDN" para um ISP regional é…', opts:['Instalar um controlador OpenFlow em tudo','Infraestrutura como código: configs no Git, mudanças via Ansible/API, provisionamento zero-touch','Trocar todos os equipamentos por white-box'], ok:1, exp:'80% do benefício vem da automação sobre equipamentos tradicionais (NETCONF/YANG > raspar CLI). Zero-touch: cadastro → OLT + RADIUS via API.'},
+ {t:'tf', q:'Automatizar a rede com uma fonte de dados (IPAM/inventário) desatualizada apenas propaga erros mais rápido.', ok:true, exp:'A automação amplifica o que existe — inclusive o erro. Fonte da verdade confiável + Git + revisão + rollback são a rede de segurança.'},
+ {t:'mc', q:'A estratégia de implantação de IPv6 recomendada para o ISP regional é…', opts:['IPv6-only com NAT64 desde o dia 1','Dual-stack: IPv4 e IPv6 em paralelo — cada % de tráfego que migra alivia o CGNAT','Esperar o IPv4 voltar a ser vendido barato'], ok:1, exp:'Vídeo e CDNs vão por IPv6 nativo, FORA do CGNAT: menos sessões, menos port exhaustion, menos chamado de jogo/console.'},
+ {t:'mc', q:'O plano de numeração IPv6 hierárquico do manual é…', opts:['/64 do registro → /96 por POP → /128 por cliente','/32 do Registro.br → /48 por POP → /56 por assinante (DHCPv6-PD) → /64 por LAN','/8 → /16 → /24, como no IPv4'], ok:1, exp:'Hierarquia que permite sumarizar no BGP. E a regra inviolável: LAN é sempre /64 (SLAAC exige).'},
+ {t:'mc', q:'Armadilha clássica que QUEBRA o IPv6 inteiro:', opts:['Usar AAAA no DNS','Filtrar ICMPv6 indiscriminadamente — mata NDP, SLAAC (RS/RA) e PMTUD','Anunciar o /32 no BGP'], ok:1, exp:'IPv6 DEPENDE do ICMPv6 estruturalmente. Aplique segurança em paridade com o IPv4, mas sem matar NDP/PMTUD.'}
+]},
+{id:'p13', parte:'Parte XIII', nome:'Serviços ao Assinante', topics:'Wi-Fi (bandas, canais, mesh), VoIP/SIP/RTP, multicast/IPTV', qs:[
+ {t:'mc', q:'Em 2,4 GHz, os únicos canais que NÃO se sobrepõem são…', opts:['1, 6 e 11','1, 7 e 13','2, 5 e 8'], ok:0, exp:'Canais de ~22 MHz espaçados de 5 MHz: usar canal 3 ou 9 soma interferência de DOIS vizinhos. Fixe 1/6/11 — o "automático" erra.'},
+ {t:'mc', q:'"Velocidade negociada" (PHY rate) do Wi-Fi…', opts:['É exatamente a vazão que o cliente recebe','NÃO é vazão: CSMA/CA divide o airtime, e overhead + retransmissões derrubam o número real','Só vale para 5 GHz'], ok:1, exp:'O ar é compartilhado: um cliente distante e lento prende o canal e derruba todos. Wi-Fi 6 (OFDMA) melhora justamente o uso do airtime.'},
+ {t:'mc', q:'Casa grande de dois andares com Wi-Fi ruim nos fundos. A solução de projeto correta:', opts:['Repetidor barato — resolve igual','Mesh com backhaul cabeado (ou banda dedicada) e mesmo SSID','Aumentar a potência do roteador acima do limite'], ok:1, exp:'Repetidor costuma repetir pela metade da banda — paliativo. Mesh dá roaming transparente. E roteador atrás da TV/no armário = chamado garantido.'},
+ {t:'mc', q:'No VoIP, quem precisa de QoS é…', opts:['O SIP (sinalização INVITE/BYE)','O RTP (a voz em si, UDP) — marcado como EF/DSCP 46','O DNS'], ok:1, exp:'SIP abre/fecha a chamada; a voz flui em RTP. Banda nunca é o problema (G.711 < 0,1 Mbps): jitter e perda são.'},
+ {t:'mc', q:'"A chamada completa, mas não há áudio (ou só um lado ouve)." Suspeita principal:', opts:['Conta SIP com senha errada','NAT/CGNAT corrompendo a mídia: trate no SBC e DESLIGUE o SIP ALG do roteador','Codec de áudio muito moderno'], ok:1, exp:'SIP/SDP carregam IPs no conteúdo; atrás de NAT o IP anunciado é privado. SBC ancora a mídia; o ALG do CPE costuma PIORAR.'},
+ {t:'mc', q:'O multicast viabiliza o IPTV porque…', opts:['Cifra o vídeo de ponta a ponta','A fonte envia UMA cópia e a rede replica só onde há quem pediu — 3 ou 3000 espectadores não mudam o tronco','Comprime o vídeo em 90%'], ok:1, exp:'Grupos usam classe D (224.0.0.0/4); IPTV interna tipicamente 239.0.0.0/8. IGMP no acesso, PIM-SM no core.'},
+ {t:'mc', q:'Sem IGMP snooping nos switches de acesso, o tráfego de IPTV…', opts:['Fica mais rápido','Vira broadcast: TODOS os canais inundam TODAS as portas, afogando a rede de acesso','É bloqueado automaticamente'], ok:1, exp:'O snooping "escuta" os joins e entrega cada canal só nas portas que pediram. Configure também o querier.'},
+ {t:'mc', q:'Para uma oferta forte de IPTV, o acesso que combina melhor é…', opts:['PPPoE — o túnel ponto a ponto facilita a replicação','IPoE — IP nativo no acesso deixa o multicast/snooping funcionarem direto','Tanto faz'], ok:1, exp:'O túnel PPPoE é unicast por natureza e atrapalha a replicação. É a justificativa prática da tabela PPPoE × IPoE.'}
+]},
+{id:'p14', parte:'Parte XIV', nome:'Troubleshooting', topics:'Bottom-up, escada de camadas, escopo, ping IP × nome, MTU/MSS', qs:[
+ {t:'mc', q:'A regra de ouro do diagnóstico no provedor:', opts:['Comece pela aplicação, que é o que o cliente vê','Uma camada só funciona se a de baixo funciona — bottom-up: confirme cada degrau antes de subir','Troque a ONT primeiro, é mais rápido'], ok:1, exp:'No acesso óptico/rádio, a maioria das falhas é camada 1. Pular etapa custa visita (o recurso mais caro do provedor).'},
+ {t:'order', q:'Ordene a escada de diagnóstico (de baixo para cima):', items:['L1: tem luz? Rx na faixa? (LEDs, power-meter, OTDR)','L2: autenticou? VLAN/MAC certos? (OLT, logs PPPoE)','L3: tem IP e rota? (ping, traceroute)','L4: porta aberta? MTU/MSS ok?','L5–7: DNS resolve? TLS/serviço no ar?'], exp:'Você elimina metade das causas a cada degrau. LOS aceso? Nada acima importa.'},
+ {t:'mc', q:'O ping responde por IP (ex.: 8.8.8.8) mas falha por NOME. O problema é…', opts:['A fibra do cliente','DNS (camada de aplicação) — a rede está de pé','O cabo de rede'], ok:1, exp:'Esse teste de 10 segundos separa rede de DNS. Decore e ensine ao atendimento de primeiro nível.'},
+ {t:'mc', q:'Antes de mergulhar no diagnóstico de UM assinante, a primeira pergunta do manual é…', opts:['"Já reiniciou o roteador?"','"Qual o escopo: um cliente, uma CTO ou a rede toda?" — muda completamente a hipótese','"Qual o plano contratado?"'], ok:1, exp:'Muitos caindo juntos = primária/OLT/uplink/DDoS — o monitoramento responde em segundos e o NOC age na causa raiz, não em mil chamados.'},
+ {t:'mc', q:'No mtr, um salto INTERMEDIÁRIO mostra perda, mas os saltos seguintes e o destino estão limpos. Isso indica…', opts:['Cabo rompido naquele roteador','Rate-limit de ICMP daquele equipamento — perda "fantasma", não problema real','Ataque DDoS em andamento'], ok:1, exp:'O que importa é a perda NO DESTINO e a tendência a partir de um salto. Roteadores despriorizam ICMP de controle.'},
+ {t:'mc', q:'Cliente PPPoE: "navega em quase tudo, mas o site do banco trava". Falha "fantasma" clássica:', opts:['MTU/MSS (PPPoE = 1492) — configure MSS clamping no BNG','Banco fora do ar para todos','Wi-Fi com canal sobreposto'], ok:0, exp:'Pacotes grandes com DF somem quando o PMTUD quebra. Sintoma seletivo = pense em MTU antes de culpar o destino.'},
+ {t:'mc', q:'Por que ler potência óptica e estado da sessão REMOTAMENTE antes de despachar técnico?', opts:['Para cumprir o SLA da Anatel','Porque a visita é o recurso mais caro: Rx −10 dBm + reclamação = Wi-Fi/config; Rx −27 e piorando = leve fibra, não outra ONT','Porque o técnico não sabe medir'], ok:1, exp:'OLT, TR-069 e RADIUS contam quase tudo sem sair do NOC. Diagnóstico vira processo, não palpite.'}
+]}
+];
+
+let E = {scores:{}, mod:null, qi:0, hits:0, answered:false};
+function openExam(){ renderExamGrid(); show('scr-exam'); }
+function renderExamGrid(){
+  const approvedCount = EXAM.filter(m=>passMod(m.id)).length;
+  $('#examOverall').innerHTML = `<div class="kfact" style="margin-top:0">🏁 Progresso: <b>${approvedCount} de ${EXAM.length}</b> módulos aprovados (mínimo 70% cada).${approvedCount===EXAM.length?' 🎓 <b>Certificação completa do manual conquistada!</b>':''}</div>`;
+  $('#examGrid').innerHTML = EXAM.map(m=>{
+    const sc = E.scores[m.id];
+    let cls='', label='Não realizado';
+    if(sc!==undefined){
+      const pct = Math.round(100*sc/m.qs.length);
+      if(pct>=70){ cls='aprovado'; label='✓ Aprovado · '+pct+'%'; }
+      else { cls='reprovado'; label='↺ '+pct+'% — refazer'; }
+    }
+    return `<div class="modcard ${cls}" onclick="startMod('${m.id}')">
+      <span class="meyebrow">${m.parte} · ${m.qs.length} questões</span>
+      <h4>${m.nome}</h4>
+      <div class="mtopics">${m.topics}</div>
+      <span class="mscore">${label}</span></div>`;
+  }).join('');
+}
+function passMod(id){ const m=EXAM.find(x=>x.id===id); return E.scores[id]!==undefined && E.scores[id]/m.qs.length>=0.7; }
+function startMod(id){
+  E.mod = EXAM.find(x=>x.id===id); E.qi=0; E.hits=0;
+  $('#quizEyebrow').textContent = 'Prova · '+E.mod.parte;
+  $('#quizTitle').textContent = '🎓 '+E.mod.nome;
+  show('scr-quiz'); renderQ();
+}
+function quizMeta(){
+  $('#qCount').textContent = 'Questão '+(E.qi+1)+'/'+E.mod.qs.length;
+  $('#qScore').textContent = E.hits+' acerto'+(E.hits===1?'':'s');
+  $('#qBarFill').style.width = (100*E.qi/E.mod.qs.length)+'%';
+}
+function shuffleArr(a){ return [...a].sort(()=>Math.random()-.5); }
+function renderQ(){
+  if(E.qi >= E.mod.qs.length){ quizEnd(); return; }
+  quizMeta(); E.answered=false;
+  const q = E.mod.qs[E.qi];
+  const tags = {mc:'Múltipla escolha', tf:'Verdadeiro ou falso', num:'Cálculo', order:'Coloque em ordem'};
+  let body='';
+  if(q.t==='mc'){
+    body = `<div class="choices">${q.opts.map((o,i)=>`<button class="choice" data-i="${i}">${o}</button>`).join('')}</div>`;
+  } else if(q.t==='tf'){
+    body = `<div class="choices" style="grid-template-columns:1fr 1fr"><button class="choice" data-v="1" style="text-align:center">✅ Verdadeiro</button><button class="choice" data-v="0" style="text-align:center">❌ Falso</button></div>`;
+  } else if(q.t==='num'){
+    body = `<div class="numrow"><input type="number" step="any" id="numIn" inputmode="decimal" placeholder="resposta"><span class="unit">${q.unit}</span><button class="btn" id="numGo">Verificar</button></div>`;
+  } else if(q.t==='order'){
+    body = `<div class="order-answer" id="oAns"></div><div class="order-pool" id="oPool"></div>
+    <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ghost" id="oReset">↺ Limpar</button><button class="btn" id="oGo" disabled>Verificar ordem</button></div>`;
+  }
+  $('#quizStage').innerHTML = `<span class="qtype-tag">${tags[q.t]}</span><div class="qtext">${q.q}</div>${body}<div class="feedback" id="qFb"></div><div id="qNext"></div>`;
+  bindQ(q);
+}
+function bindQ(q){
+  const stage = $('#quizStage');
+  if(q.t==='mc'){
+    stage.querySelectorAll('.choice').forEach(c=>{
+      c.onclick = e=>{ if(E.answered) return; E.answered=true;
+        stage.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+        const ok = +c.dataset.i===q.ok;
+        c.classList.add(ok?'right':'wrong');
+        if(!ok) stage.querySelector('.choice[data-i="'+q.ok+'"]').classList.add('right');
+        settleQ(ok, q, e);
+      };
+    });
+  }
+  if(q.t==='tf'){
+    stage.querySelectorAll('.choice').forEach(c=>{
+      c.onclick = e=>{ if(E.answered) return; E.answered=true;
+        stage.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+        const ok = (c.dataset.v==='1')===q.ok;
+        c.classList.add(ok?'right':'wrong');
+        if(!ok) stage.querySelector('.choice[data-v="'+(q.ok?1:0)+'"]').classList.add('right');
+        settleQ(ok, q, e);
+      };
+    });
+  }
+  if(q.t==='num'){
+    $('#numGo').onclick = e=>{ if(E.answered) return;
+      const v = parseFloat($('#numIn').value.replace(',','.'));
+      if(isNaN(v)){ fb($('#qFb'),'info','Digite um número (use ponto ou vírgula para decimais).'); return; }
+      E.answered=true; $('#numGo').disabled=true; $('#numIn').disabled=true;
+      const ok = Math.abs(v - q.ans) <= q.tol;
+      settleQ(ok, q, e, ok?null:'Resposta esperada: <b>'+q.ans+' '+q.unit+'</b>. ');
+    };
+    $('#numIn').addEventListener('keydown', ev=>{ if(ev.key==='Enter') $('#numGo').click(); });
+  }
+  if(q.t==='order'){
+    let built=[];
+    const pool=$('#oPool'), ans=$('#oAns');
+    shuffleArr(q.items.map((it,i)=>({it,i}))).forEach(o=>{
+      const b=document.createElement('button'); b.className='ochip'; b.textContent=o.it; b.dataset.i=o.i;
+      b.onclick=()=>{ if(E.answered) return; built.push(+b.dataset.i); ans.appendChild(b); $('#oGo').disabled = built.length!==q.items.length; };
+      pool.appendChild(b);
+    });
+    $('#oReset').onclick=()=>{ if(E.answered) return; built=[]; [...ans.children].forEach(c=>pool.appendChild(c)); $('#oGo').disabled=true; };
+    $('#oGo').onclick=e=>{ if(E.answered) return; E.answered=true; $('#oGo').disabled=true; $('#oReset').disabled=true;
+      const ok = built.every((v,i)=>v===i);
+      const correct = q.items.map((it,i)=>(i+1)+'. '+it).join(' → ');
+      settleQ(ok, q, e, ok?null:'Ordem correta: <b>'+correct+'</b>. ');
+    };
+  }
+}
+function settleQ(ok, q, e, extra){
+  if(ok){ E.hits++; addXP(10,e); }
+  quizMeta();
+  fb($('#qFb'), ok?'ok':'bad', (ok?'✅ Correto! ':'❌ '+(extra||''))+'🧠 '+q.exp);
+  const b=document.createElement('button'); b.className='btn gold'; b.style.marginTop='14px';
+  b.textContent = E.qi+1 < E.mod.qs.length ? 'Próxima questão →' : 'Ver resultado →';
+  b.onclick=()=>{ E.qi++; renderQ(); };
+  $('#qNext').appendChild(b); if(b.scrollIntoView) b.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function quizEnd(){
+  const total=E.mod.qs.length, pct=Math.round(100*E.hits/total), passed=pct>=70;
+  E.scores[E.mod.id]=E.hits;
+  if(passed) addXP(40);
+  const allPassed = EXAM.every(m=>passMod(m.id));
+  if(allPassed && !S.badges.exam){ S.badges.exam=true; addXP(200); renderBadgesMini(); }
+  $('#qBarFill').style.width='100%';
+  $('#quizStage').innerHTML = `<div class="exam-result">
+    <div class="gauge-ring" style="background:conic-gradient(${passed?'var(--apc)':'#e8a13a'} ${pct*3.6}deg, var(--grid) 0)"><span style="background:var(--card);width:96px;height:96px;border-radius:50%;display:grid;place-items:center;color:var(--ink)">${pct}%</span></div>
+    <div class="big">${passed?'APROVADO ✓':'QUASE LÁ'}</div>
+    <p style="color:var(--ink-soft)">${E.hits} de ${total} questões · mínimo para aprovação: 70%</p>
+    ${allPassed?'<div class="feedback show ok" style="display:block;text-align:left;margin-top:16px">🎓 <b>CERTIFICAÇÃO COMPLETA DO MANUAL!</b> Você foi aprovado nos 14 módulos — das janelas de transmissão da fibra ao RTBH do DDoS. +200 XP de bônus. Confira o selo no seu certificado.</div>':''}
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      ${passed?'':'<button class="btn gold" onclick="startMod(\''+E.mod.id+'\')">↺ Refazer módulo</button>'}
+      <button class="btn ${passed?'gold':'ghost'}" onclick="openExam()">${passed?'Próximo módulo →':'Voltar aos módulos'}</button>
+      ${allPassed?'<button class="btn ghost" onclick="renderCert();show(\'scr-cert\')">Ver certificado 🏅</button>':''}
+    </div></div>`;
+}
+
+/* ============ M7: LAB PROJETO PON ============ */
+let m7;
+const SPLIT_LOSS = {'1':0,'2':3.5,'4':7.0,'8':10.5,'16':13.5,'32':17.5,'64':21.0};
+function initM7(){
+  m7 = {c1:false,c2:false,c3:false};
+  $('#m7stage').innerHTML = `
+  <div class="osi-cols" style="margin-top:14px">
+    <div>
+      <div class="contract" style="margin-top:0"><h4>🎛️ Controles da árvore</h4>
+        <div style="display:grid;gap:12px;margin-top:8px;font-size:.85rem">
+          <label>Classe da OLT:
+            <select id="p7classe" style="width:100%;padding:8px;border:2px solid var(--ink);border-radius:8px;font-family:'IBM Plex Mono';background:#fff">
+              <option value="3">B+ · Tx +3 dBm</option>
+              <option value="5" selected>C+ · Tx +5 dBm</option>
+            </select></label>
+          <label>Distância da fibra (1490 nm): <b id="p7dLbl" class="mono">8 km</b>
+            <input type="range" id="p7d" min="1" max="25" step="0.5" value="8" style="width:100%"></label>
+          <label>Splitter da rede primária:
+            <select id="p7s1" style="width:100%;padding:8px;border:2px solid var(--ink);border-radius:8px;font-family:'IBM Plex Mono';background:#fff">
+              <option value="1">nenhum</option><option value="2" selected>1:2 (3,5 dB)</option><option value="4">1:4 (7,0 dB)</option>
+            </select></label>
+          <label>Splitter da CTO:
+            <select id="p7s2" style="width:100%;padding:8px;border:2px solid var(--ink);border-radius:8px;font-family:'IBM Plex Mono';background:#fff">
+              <option value="8" selected>1:8 (10,5 dB)</option><option value="16">1:16 (13,5 dB)</option><option value="32">1:32 (17,5 dB)</option><option value="64">1:64 (21,0 dB)</option>
+            </select></label>
+          <label>Conectores no caminho: <b id="p7cLbl" class="mono">4</b>
+            <input type="range" id="p7c" min="2" max="6" value="4" style="width:100%"></label>
+          <label>Fusões: <b id="p7fLbl" class="mono">3</b>
+            <input type="range" id="p7f" min="0" max="10" value="3" style="width:100%"></label>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="meter" style="max-width:none;margin:0"><div class="lbl">P<sub>Rx</sub> previsto na ONT</div>
+        <div class="val" id="p7rx">—</div>
+        <div class="scale"><div class="needle" id="p7needle" style="left:50%"></div></div>
+        <div class="ticks"><span>-40</span><span>-28</span><span>-24</span><span>-8</span></div>
+        <div id="p7verdict" style="margin-top:10px;font-size:.8rem;font-family:'IBM Plex Mono'"></div>
+      </div>
+      <table class="result-table" id="p7table"></table>
+    </div>
+  </div>
+  <h3 class="disp" style="margin-top:20px">🎯 Desafios de projeto</h3>
+  <div class="choices" id="p7goals" style="margin-top:8px"></div>
+  <div class="feedback" id="m7f"></div>
+  <div id="m7end"></div>`;
+  ['p7classe','p7d','p7s1','p7s2','p7c','p7f'].forEach(id=> $('#'+id).oninput = m7Calc);
+  m7Calc();
+}
+function m7Goals(rx, ratio, d){
+  const goals = [
+    {k:'c1', t:'1) Condomínio denso: feche um projeto com divisão total ≥ 1:32 e Rx na faixa saudável (−8 a −24 dBm)', ok: ratio>=32 && rx>=-24 && rx<=-8},
+    {k:'c2', t:'2) Cliente rural: alcance ≥ 20 km de fibra mantendo o Rx saudável', ok: d>=20 && rx>=-24 && rx<=-8},
+    {k:'c3', t:'3) Sinta o limite: monte de propósito um projeto LIMÍTROFE (Rx entre −25 e −27,9 dBm) e veja por que ele volta como chamado', ok: rx<=-25 && rx>-28},
+  ];
+  goals.forEach(g=>{
+    if(g.ok && !m7[g.k]){ m7[g.k]=true; addXP(30);
+      fb($('#m7f'),'ok','✅ Desafio '+g.t.charAt(0)+' cumprido! '+(g.k==='c3'?'Projeto no limite: qualquer conector sujo, sol no drop ou fusão refeita pior joga o cliente abaixo da sensibilidade. Por isso a margem de 3 dB é inegociável.':'Projeto fecha com folga — instalação aprovada antes de ir a campo.'));
+    }
+  });
+  $('#p7goals').innerHTML = goals.map(g=>
+    `<div class="choice ${m7[g.k]?'right':''}" style="cursor:default">${m7[g.k]?'✅ ':'⬜ '}${g.t}</div>`).join('');
+  if(m7.c1 && m7.c2 && m7.c3 && !S.done.m7){
+    completeMission('m7');
+    $('#m7end').innerHTML = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Projetista PON!</b> Você dominou A conta da PON: o splitter é o maior item, a fibra come ~0,28 dB/km em 1490 nm, e a sobra até a sensibilidade (−28 dBm) decide se o cliente da borda funciona — antes de qualquer técnico subir no poste.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m8')">📈 Próximo lab: OTDR →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+  }
+}
+function m7Calc(){
+  const tx = +$('#p7classe').value;
+  const d = +$('#p7d').value, s1 = $('#p7s1').value, s2 = $('#p7s2').value;
+  const nc = +$('#p7c').value, nf = +$('#p7f').value;
+  $('#p7dLbl').textContent = d+' km'; $('#p7cLbl').textContent = nc; $('#p7fLbl').textContent = nf;
+  const fib = d*0.28, sp = SPLIT_LOSS[s1]+SPLIT_LOSS[s2], con = nc*0.4, fus = nf*0.08;
+  const total = fib+sp+con+fus, rx = +(tx-total).toFixed(1);
+  const ratio = (+s1)*(+s2);
+  $('#p7table').innerHTML = `<tr><th>Item</th><th style="text-align:right">dB</th></tr>
+    <tr><td>Fibra (${d} km × 0,28)</td><td>${fib.toFixed(2)}</td></tr>
+    <tr><td>Splitters (${s1==='1'?'—':'1:'+s1}${s1==='1'?'':' + '}1:${s2} → divisão 1:${ratio})</td><td>${sp.toFixed(1)}</td></tr>
+    <tr><td>Conectores (${nc} × 0,4)</td><td>${con.toFixed(2)}</td></tr>
+    <tr><td>Fusões (${nf} × 0,08)</td><td>${fus.toFixed(2)}</td></tr>
+    <tr><td><b>Perda total</b> (Tx ${tx>0?'+':''}${tx} dBm)</td><td><b>${total.toFixed(2)}</b></td></tr>`;
+  $('#p7rx').textContent = rx.toFixed(1).replace('-','−')+' dBm';
+  $('#p7needle').style.left = rxToPct(rx)+'%';
+  const sobra = (rx-(-28)).toFixed(1);
+  let v;
+  if(rx>-8) v = '⚠ FORTE DEMAIS: acima de −8 dBm pode saturar o receptor';
+  else if(rx>=-24) v = '💚 SAUDÁVEL · sobra de '+sobra+' dB até a sensibilidade (−28)';
+  else if(rx>-28) v = '🟡 LIMÍTROFE · só '+sobra+' dB de folga — vai virar chamado';
+  else v = '🚨 ABAIXO DA SENSIBILIDADE: este cliente não fecha';
+  $('#p7verdict').textContent = v;
+  m7Goals(rx, ratio, d);
+}
+
+/* ============ M8: LAB OTDR ============ */
+let m8;
+const M8_EVENTS = [
+  {d:0.5, type:'conector', l:{w1310:0.4, w1550:0.4}, refl:true},
+  {d:1.4, type:'fusao',    l:{w1310:0.08, w1550:0.08}, refl:false},
+  {d:2.1, type:'curva',    l:{w1310:0.3, w1550:2.6}, refl:false},
+  {d:2.8, type:'splitter', l:{w1310:10.5, w1550:10.5}, refl:false},
+  {d:3.4, type:'fim',      l:{w1310:0, w1550:0}, refl:true},
+];
+const M8_TYPES = [['conector','🔌 Conector (pico reflexivo + degrau)'],['fusao','🔥 Fusão (degrau sem pico)'],['curva','↩️ Curvatura / macrobend'],['splitter','🔱 Splitter (degrau grande)'],['fim','🏁 Fim da fibra (pico + ruído)']];
+function initM8(){
+  m8 = {lam:'w1310', done:{}, tries:{}, sel:null};
+  $('#m8stage').innerHTML = `
+  <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.8rem;font-weight:700">Comprimento de onda:</span>
+    <button class="btn" id="m8l1310" style="background:var(--upc)">1310 nm</button>
+    <button class="btn ghost" id="m8l1550">1550 nm</button>
+    <span class="mono" style="font-size:.75rem;color:var(--ink-soft)" id="m8slope">atenuação da fibra: 0,33 dB/km</span>
+  </div>
+  <div class="ont-box" style="padding:8px"><svg id="m8svg" viewBox="0 0 720 300" style="width:100%"></svg></div>
+  <div id="m8panel"><p style="font-size:.88rem;color:var(--ink-soft);margin-top:10px">👆 Toque num marcador numerado do traço para classificar o evento.</p></div>
+  <div class="feedback" id="m8f"></div>
+  <div id="m8end"></div>`;
+  $('#m8l1310').onclick = ()=>m8SetLam('w1310');
+  $('#m8l1550').onclick = ()=>m8SetLam('w1550');
+  m8Draw();
+}
+function m8SetLam(l){
+  m8.lam = l;
+  $('#m8l1310').className = 'btn'+(l==='w1310'?'':' ghost'); $('#m8l1310').style.background = l==='w1310'?'var(--upc)':'';
+  $('#m8l1550').className = 'btn'+(l==='w1550'?'':' ghost'); $('#m8l1550').style.background = l==='w1550'?'#8e44ad':'';
+  $('#m8slope').textContent = 'atenuação da fibra: '+(l==='w1310'?'0,33':'0,20')+' dB/km';
+  m8Draw();
+}
+function m8Draw(){
+  const slope = m8.lam==='w1310'?0.33:0.20;
+  const X = d => 60 + d/3.8*620;
+  const SC = 14; // px por dB
+  let pts=[], marks='';
+  let loss=0, prevD=0;
+  pts.push([X(0), 40]);
+  M8_EVENTS.forEach((ev,i)=>{
+    loss += (ev.d-prevD)*slope; prevD = ev.d;
+    const x = X(ev.d);
+    pts.push([x, 40+loss*SC]);
+    if(ev.refl){ pts.push([x+3, 40+loss*SC-22]); pts.push([x+6, 40+loss*SC]); }
+    if(ev.type==='fim'){
+      pts.push([x+8, 270]);
+      pts.push([X(3.75), 268]);
+    } else {
+      loss += ev.l[m8.lam];
+      pts.push([x+8, 40+loss*SC]);
+    }
+    const my = Math.min(40+loss*SC, 250);
+    marks += `<g class="port" data-ev="${i}" style="cursor:pointer">
+      <circle cx="${x}" cy="${my+24}" r="13" fill="${m8.done[i]?'#1f9d55':'#15303d'}" stroke="#fff" stroke-width="2.5"/>
+      <text x="${x}" y="${my+29}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="IBM Plex Mono">${m8.done[i]?'✓':i+1}</text></g>`;
+  });
+  const path = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  $('#m8svg').innerHTML = `
+    <rect x="50" y="20" width="640" height="260" fill="#0e1f28" rx="8"/>
+    ${[0,1,2,3].map(k=>`<line x1="50" y1="${20+k*65+65}" x2="690" y2="${20+k*65+65}" stroke="#1b3440" stroke-width="1"/>`).join('')}
+    ${[0,1,2,3].map(k=>`<text x="${X(k)}" y="296" text-anchor="middle" font-size="10" fill="#5d7a86" font-family="IBM Plex Mono">${k} km</text>`).join('')}
+    <text x="56" y="36" font-size="10" fill="#5d7a86" font-family="IBM Plex Mono">dB ↓ · OTDR @ ${m8.lam.slice(1)} nm</text>
+    <path d="${path}" fill="none" stroke="#7ce38b" stroke-width="2.5" stroke-linejoin="round"/>
+    ${marks}`;
+  $('#m8svg').querySelectorAll('[data-ev]').forEach(g=>{
+    g.onclick = ()=> m8Classify(+g.dataset.ev);
+  });
+}
+function m8Classify(i){
+  if(m8.done[i]){ fb($('#m8f'),'info','Evento '+(i+1)+' já classificado ✓'); return; }
+  const ev = M8_EVENTS[i];
+  const l13 = ev.l.w1310.toFixed(2), l15 = ev.l.w1550.toFixed(2);
+  $('#m8panel').innerHTML = `
+  <h3 class="disp" style="margin-top:14px">Evento ${i+1} — a ${ev.d.toFixed(1)} km</h3>
+  <p class="mono" style="font-size:.78rem;color:var(--ink-soft);margin-top:4px">perda medida: ${ev.type==='fim'?'queda ao ruído':l13+' dB @1310 · '+l15+' dB @1550'} · ${ev.refl?'COM pico reflexivo':'sem pico reflexivo'}</p>
+  <div class="choices">${M8_TYPES.map(t=>`<button class="choice" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>`;
+  $('#m8panel').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.t===ev.type){
+        m8.done[i]=true; c.classList.add('right');
+        const first = !m8.tries[i]; if(first) addXP(20,e);
+        const exps = {conector:'Pico reflexivo + degrau = conector. A reflexão vem da transição vidro→ar→vidro.', fusao:'Degrau pequeno (≤0,1 dB) sem pico = fusão. Acima de 0,1 dB em primária: refazer.', curva:'A perda explodiu de 0,3 dB @1310 para 2,6 dB @1550 — assinatura de MACROBENDING. Procure cabo dobrado/prensado; não refaça a fusão!', splitter:'Degrau de ~10,5 dB = splitter 1:8 — o maior consumidor do orçamento.', fim:'Pico final + queda ao ruído = fim da fibra. Confirme se a distância bate com o projeto.'};
+        fb($('#m8f'),'ok','✅ '+exps[ev.type]);
+        m8Draw();
+        if(Object.keys(m8.done).length===M8_EVENTS.length) m8Bonus();
+      } else {
+        m8.tries[i]=true; c.classList.add('wrong');
+        let hint = 'Olhe a assinatura: pico = reflexivo (conector/fim); degrau pequeno = fusão; degrau gigante = splitter.';
+        if(ev.type==='curva') hint = '🔍 Dica de mestre: alterne entre <b>1310 e 1550 nm</b> e compare a perda DESTE evento. Curvatura dispara em 1550; fusão perde igual nos dois.';
+        fb($('#m8f'),'bad','❌ Não é isso. '+hint);
+      }
+    };
+  });
+}
+function m8Bonus(){
+  $('#m8panel').innerHTML = `
+  <h3 class="disp" style="margin-top:16px">Bônus — a pegadinha do "ganho"</h3>
+  <p style="font-size:.9rem;color:var(--ink-soft)">Na medição do sentido oposto, uma fusão apareceu como um degrau PARA CIMA (+0,12 dB), como se a fibra tivesse amplificado a luz. O que é isso?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">Um amplificador óptico instalado por engano</button>
+    <button class="choice" data-ok="1">Um "gainer": artefato de fibras com retroespalhamento diferente — a perda real é a média das medições nos dois sentidos</button>
+    <button class="choice" data-ok="0">Defeito no OTDR; descartar a medição</button>
+  </div>`;
+  $('#m8panel').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m8panel'),c,true); addXP(25,e); completeMission('m8');
+        $('#m8end').innerHTML = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Leitor de OTDR!</b> Fibra só atenua — "ganho" é sempre artefato. Por isso fusões críticas se medem bidirecionalmente, sempre com launch cable e comparando com o baseline da certificação.</div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m9')">🛡️ Próximo: NOC sob ataque →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+      } else { c.classList.add('wrong'); fb($('#m8f'),'bad','❌ Fisicamente impossível a fibra ganhar potência — e o OTDR está bom. Pense em fibras de lotes diferentes emendadas…'); }
+    };
+  });
+}
+
+/* ============ M9: NOC DDOS ============ */
+let m9s;
+function nocLine(html, cls){
+  const t = $('#nocTerm'); const d = document.createElement('div');
+  d.className='out '+(cls||''); d.innerHTML = html; t.appendChild(d); t.scrollTop = t.scrollHeight;
+}
+function initM9(){
+  m9s = {step:0};
+  $('#nocTerm').innerHTML = '<div class="out sys">⚠ ALARME: uplink-transito-1 (10G) em 98% · latência média dos clientes: 9 ms → 180 ms · 21h07</div>';
+  $('#m9extra').innerHTML='';
+  m9Bar();
+}
+function m9Bar(){
+  const steps = [
+    [{c:'show flow top-talkers', ok:true},{c:'reboot border-router', ok:false},{c:'clear bgp sessions all', ok:false}],
+    [{c:'rtbh announce 187.45.10.50/32 community 65000:666', ok:true},{c:'qos priority maximum all-clients', ok:false},{c:'firewall drop udp any', ok:false}],
+  ];
+  const bar = $('#nocBar');
+  if(m9s.step>=steps.length){ bar.innerHTML=''; return; }
+  bar.innerHTML = steps[m9s.step].map((s,i)=>`<button class="cmdchip" data-i="${i}">${s.c}</button>`).join('');
+  bar.querySelectorAll('.cmdchip').forEach(btn=>{
+    btn.onclick = e=>{
+      const s = steps[m9s.step][+btn.dataset.i];
+      nocLine('NOC# <span class="cmdline">'+s.c+'</span>');
+      m9Handle(s, e);
+    };
+  });
+}
+function m9Handle(s, e){
+  if(m9s.step===0){
+    if(!s.ok){
+      nocLine(s.c.includes('reboot')
+        ? '✖ ABORTADO: reiniciar a borda derruba TODOS os clientes e o ataque continua quando voltar. Primeiro, ENXERGUE o tráfego.'
+        : '✖ ABORTADO: derrubar as sessões BGP tira a cidade da internet — pior que o ataque. Sem flow você está agindo às cegas.','sys');
+      return;
+    }
+    nocLine('--------------------------------------------\nTOP TALKERS (últimos 60 s):\n  9,4 Gbps → <span class="hl">187.45.10.50</span> (assinante: PIZZARIA DO JOÃO)\n  protocolo: <span class="hl">UDP porta origem 123 (NTP)</span> · pacotes grandes\n  origens: 38.412 IPs distintos, monlist responses\n--------------------------------------------','');
+    nocLine('💡 Consulta pequena com IP forjado → milhares de servidores NTP abertos respondem ENORME para a vítima.','sys');
+    m9s.step=1; addXP(25,e); m9Bar(); m9Quiz1();
+  }
+  else if(m9s.step===1){
+    if(!s.ok){
+      nocLine(s.c.includes('qos')
+        ? '✖ QoS prioriza, mas NÃO CRIA banda: o cano físico continua com 9,4 Gbps de lixo. Em saturação, QoS não salva.'
+        : '✖ Dropar TODO UDP mata DNS, QUIC/HTTP3 e VoIP de TODOS os clientes — você viraria o ataque. Precisão, não pânico.','sys');
+      return;
+    }
+    nocLine('✔ Prefixo 187.45.10.50/32 anunciado com a <span class="hl">community de blackhole</span> acordada com o upstream.\n>>> O TRÂNSITO passa a descartar o ataque LÁ NA ORIGEM, antes do seu cano.\n>>> uplink-transito-1: 98% → <span class="hl">31%</span> · latência: 180 ms → <span class="hl">9 ms</span> 🎉','');
+    m9s.step=2; addXP(35,e); m9Bar(); m9Quiz2();
+  }
+}
+function m9Quiz1(){
+  $('#m9extra').innerHTML = `
+  <p style="margin-top:14px;font-size:.9rem"><b>Diagnóstico rápido:</b> que tipo de ataque é esse?</p>
+  <div class="choices">
+    <button class="choice" data-ok="0">SYN flood (esgota estado do BNG)</button>
+    <button class="choice" data-ok="1">Volumétrico por amplificação/reflexão NTP: consultas com IP de origem forjado fazem refletores abertos despejarem respostas gigantes na vítima</button>
+    <button class="choice" data-ok="0">Ataque de aplicação (HTTP flood)</button>
+  </div>
+  <div class="feedback" id="m9f1"></div><div id="m9q2"></div>`;
+  $('#m9extra').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.dataset.ok==='1'){
+        lockChoices($('#m9extra'),c,true); addXP(20,e);
+        fb($('#m9f1'),'ok','✅ Amplificação: o mais comum e perigoso para ISP. Agora aja — o terminal tem as opções de mitigação. O cano está saturando: pense no que salva a CIDADE primeiro.');
+      } else { c.classList.add('wrong'); fb($('#m9f1'),'bad','❌ Olhe o flow: 9,4 Gbps de UDP/123 vindos de 38 mil origens. Isso enche BANDA, não estado.'); }
+    };
+  });
+}
+function m9Quiz2(){
+  $('#m9q2').innerHTML = `
+  <p style="margin-top:16px;font-size:.9rem"><b>Pós-incidente:</b> o RTBH salvou a cidade, mas deixou a Pizzaria do João offline. Marque as duas reflexões corretas:</p>
+  <div class="choices">
+    <button class="choice" data-ok="1">Se o upstream suportasse <b>Flowspec</b>, daria para descartar só UDP/123 destinado ao alvo — preservando o cliente. RTBH é o freio de emergência; Flowspec/scrubbing, a cirurgia.</button>
+    <button class="choice" data-ok="0">O certo seria absorver o ataque comprando 100 Gbps de trânsito às 21h da noite</button>
+    <button class="choice" data-ok="1">Prevenção para não ser ARMA nem REFLETOR: BCP38/uRPF na borda e fechar resolvers DNS, NTP e SNMP abertos da própria rede</button>
+  </div>
+  <div class="feedback" id="m9f2"></div>`;
+  let hits=0;
+  $('#m9q2').querySelectorAll('.choice').forEach(c=>{
+    c.onclick = e=>{
+      if(c.classList.contains('right')||c.classList.contains('wrong')) return;
+      if(c.dataset.ok==='1'){
+        c.classList.add('right'); hits++; addXP(20,e);
+        if(hits===2){
+          completeMission('m9');
+          fb($('#m9f2'),'ok','🏅 <b>Badge: Defensor do NOC!</b> Lição do manual: tenha a community de blackhole ACORDADA e testada com o upstream ANTES do ataque — no meio de 9,4 Gbps não há tempo de configurar. E flow é os olhos: sem NetFlow você descobre o DDoS pelo telefone tocando.');
+          nextBtn('#m9q2',()=>openMission('m10'),'🔢 Próximo lab: sub-redes →');
+        } else fb($('#m9f2'),'info','✔ Correto! Falta mais uma reflexão certa.');
+      } else { c.classList.add('wrong'); fb($('#m9f2'),'bad','❌ Nenhum ISP regional absorve centenas de Gbps — a defesa eficaz move o descarte para PERTO DA FONTE (upstream/IX/scrubbing).'); }
+    };
+  });
+}
+
+/* ============ M10: SUB-REDES ============ */
+let m10;
+function initM10(){
+  m10 = {round:1, hits:0};
+  m10Gen();
+}
+function m10Gen(){
+  const p = 25 + Math.floor(Math.random()*5); // 25..29
+  const block = Math.pow(2, 32-p);
+  const o3 = Math.floor(Math.random()*200)+1;
+  let host = Math.floor(Math.random()*254)+1;
+  const net = Math.floor(host/block)*block;
+  if(host===net || host===net+block-1) host = net+1;
+  const base = '192.168.'+o3+'.';
+  m10.ex = {ipStr: base+host+'/'+p, p, block, net: base+net, bcast: base+(net+block-1), hosts: block-2, magic: 256-(256-block)};
+  $('#m10stage').innerHTML = `
+  <div class="progress-steps">${[1,2,3].map(i=>`<i class="${i<m10.round?'done':i===m10.round?'cur':''}"></i>`).join('')}</div>
+  <div class="contract" style="max-width:420px"><h4>📋 Exercício ${m10.round} de 3</h4>
+    <p style="font-family:'IBM Plex Mono';font-size:1.3rem;font-weight:600;margin-top:6px">${m10.ex.ipStr}</p>
+    <p style="font-size:.78rem;color:var(--ink-soft);margin-top:4px">Encontre a rede, o broadcast e os hosts utilizáveis deste endereço.</p>
+  </div>
+  <div style="display:grid;gap:12px;margin-top:14px;max-width:480px">
+    <div class="numrow" style="margin:0"><span style="width:110px;font-size:.82rem;font-weight:700">Rede:</span><input type="text" id="s10net" class="mono" placeholder="ex.: 192.168.1.0" style="flex:1;font-family:'IBM Plex Mono';font-size:.95rem;padding:10px;border:2px solid var(--ink);border-radius:10px;background:#fff"></div>
+    <div class="numrow" style="margin:0"><span style="width:110px;font-size:.82rem;font-weight:700">Broadcast:</span><input type="text" id="s10bc" class="mono" placeholder="ex.: 192.168.1.63" style="flex:1;font-family:'IBM Plex Mono';font-size:.95rem;padding:10px;border:2px solid var(--ink);border-radius:10px;background:#fff"></div>
+    <div class="numrow" style="margin:0"><span style="width:110px;font-size:.82rem;font-weight:700">Hosts úteis:</span><input type="number" id="s10h" placeholder="ex.: 62" style="width:140px;font-family:'IBM Plex Mono';font-size:.95rem;padding:10px;border:2px solid var(--ink);border-radius:10px;background:#fff"></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn gold" id="s10go">✓ Verificar</button>
+    <button class="btn ghost" id="s10hint">💡 Dica do número mágico</button>
+  </div>
+  <div class="feedback" id="m10f"></div><div id="m10end"></div>`;
+  $('#s10hint').onclick = ()=> fb($('#m10f'),'info','💡 /'+m10.ex.p+' → bloco de 2^'+(32-m10.ex.p)+' = <b>'+m10.ex.block+'</b> endereços. As redes começam em múltiplos de '+m10.ex.block+' no último octeto (0, '+m10.ex.block+', '+(m10.ex.block*2)+'…). Rede = maior múltiplo ≤ ao octeto do IP; broadcast = rede + '+(m10.ex.block-1)+'; hosts = bloco − 2.');
+  $('#s10go').onclick = e=> m10Check(e);
+}
+function m10Check(e){
+  const net = $('#s10net').value.trim(), bc = $('#s10bc').value.trim(), h = parseInt($('#s10h').value);
+  const ex = m10.ex;
+  const r = [net===ex.net, bc===ex.bcast, h===ex.hosts];
+  ['#s10net','#s10bc','#s10h'].forEach((id,i)=>{ $(id).style.borderColor = r[i]?'var(--apc)':'var(--alarm)'; });
+  if(r.every(Boolean)){
+    addXP(35,e); m10.hits++;
+    if(m10.round<3){
+      fb($('#m10f'),'ok','✅ Gabaritou! Rede '+ex.net+', broadcast '+ex.bcast+', '+ex.hosts+' hosts. Próximo!');
+      m10.round++; setTimeout(m10Gen, 1200);
+    } else {
+      completeMission('m10');
+      fb($('#m10f'),'ok','✅ Terceiro exercício fechado!');
+      $('#m10end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Mestre das Sub-redes!</b> Essa receita dimensiona pools de PPPoE, recortes de CGNAT (100.64.0.0/10), /30 de transporte e gerência — a habilidade mais usada no dia a dia do provedor. Lembre do VLSM: sempre do maior bloco para o menor.</div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="initM10()">↺ Treinar mais</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+    }
+  } else {
+    const wrongs = ['rede','broadcast','hosts'].filter((_,i)=>!r[i]);
+    fb($('#m10f'),'bad','❌ Confira: <b>'+wrongs.join(', ')+'</b>. Use a dica do número mágico se precisar — e lembre que rede e broadcast não contam como hosts.');
+  }
+}
+
+/* ============ boot ============ */
+renderBadgesMini();
+renderMap();
+</script>
+</body>
+</html>
