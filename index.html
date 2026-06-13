@@ -280,6 +280,47 @@ main{max-width:1020px;margin:0 auto;padding:22px 16px}
 .progress-steps i{flex:1;height:7px;border-radius:4px;background:var(--grid);transition:.3s}
 .progress-steps i.cur{background:var(--fiber)}
 .progress-steps i.done{background:var(--apc)}
+/* ---------- labs novos (m11–m17) ---------- */
+.lab-sel{width:100%;padding:8px;border:2px solid var(--ink);border-radius:8px;font-family:'IBM Plex Mono';background:#fff;color:var(--ink)}
+.m12grid{display:flex;gap:3px;flex-wrap:wrap;margin-top:10px}
+.m12slot{width:26px;height:30px;border-radius:4px;background:#eef2f4;border:1px solid var(--grid);transition:.2s;display:grid;place-items:center;font-size:.6rem;font-family:'IBM Plex Mono';color:#fff}
+.m12slot.sA{background:var(--upc)}.m12slot.sB{background:#8e44ad}.m12slot.sC{background:var(--apc)}
+.m12slot.idle{background:repeating-linear-gradient(45deg,#e6ebee,#e6ebee 4px,#d3dde2 4px,#d3dde2 8px);color:var(--ink-soft)}
+.m12slot.drop{background:var(--alarm);animation:shake .35s}
+/* frame Q-in-Q */
+.framewrap{display:flex;flex-wrap:wrap;gap:0;margin-top:14px;border:2px solid var(--ink);border-radius:10px;overflow:hidden;font-family:'IBM Plex Mono';font-size:.7rem}
+.fseg{padding:12px 10px;color:#fff;text-align:center;border-right:2px solid rgba(255,255,255,.5);min-width:60px}
+.fseg small{display:block;font-size:.6rem;opacity:.85;margin-top:2px}
+.fseg.mac{background:#4d6a78}.fseg.stag{background:var(--alarm)}.fseg.ctag{background:var(--upc)}.fseg.etype{background:#8e44ad}.fseg.pay{background:var(--ink);flex:1}
+/* MPLS */
+.mpls-track{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+.mpls-node{border:2px solid var(--ink);border-radius:10px;padding:10px 12px;text-align:center;background:#fff;min-width:74px;transition:.2s}
+.mpls-node.cur{border-color:var(--fiber);box-shadow:0 0 0 4px rgba(242,183,5,.3);transform:translateY(-2px)}
+.mpls-node.done{background:#def3e6;border-color:var(--apc)}
+.mpls-node b{font-family:'Saira Condensed';font-size:.9rem;display:block}
+.mpls-node small{font-size:.62rem;color:var(--ink-soft)}
+.mpls-arrow{color:var(--ink-soft);font-size:1.1rem}
+.labelstack{display:flex;flex-direction:column-reverse;gap:3px;align-items:center;margin:10px auto;min-height:30px}
+.lblchip{font-family:'IBM Plex Mono';font-size:.72rem;font-weight:600;background:var(--fiber);color:var(--ink);border:2px solid var(--ink);border-radius:6px;padding:3px 10px;animation:popin .3s}
+.toggle-row{display:flex;gap:8px;align-items:center;font-size:.85rem;margin-top:6px}
+.pktbubble{display:inline-block;background:var(--ink);color:#fff;font-family:'IBM Plex Mono';font-size:.78rem;padding:8px 14px;border-radius:8px;border:2px solid var(--fiber)}
+/* roteamento (m18) */
+.rt-row{cursor:pointer;transition:.12s}
+.rt-row:hover td{background:#eef6ff}
+.rt-row.win td{background:#def3e6}
+.rt-row.lose td{background:#fbe3e3}
+/* IPTV (m21) */
+.iptv-ports{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.iptv-port{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;font-size:.78rem;background:#fff;transition:.2s}
+.iptv-port.recv{background:#def3e6;border-color:var(--apc)}
+.iptv-port.flood{background:#fbe3e3;border-color:var(--alarm)}
+.iptv-port label{display:flex;gap:6px;align-items:center;justify-content:center;font-size:.72rem;margin-top:8px;cursor:pointer}
+/* Wi-Fi (m22) */
+.wifi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.wifi-ap{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:#fff}
+.wifi-ap.clash{border-color:var(--alarm);background:#fbe3e3}
+.wifi-ap.clean{border-color:var(--apc)}
+.wifi-link{font-size:.66rem;color:var(--ink-soft);text-align:center;font-family:'IBM Plex Mono'}
 footer{text-align:center;font-size:.74rem;color:var(--ink-soft);margin-top:30px;padding:0 16px}
 </style>
 </head>
@@ -300,7 +341,7 @@ footer{text-align:center;font-size:.74rem;color:var(--ink-soft);margin-top:30px;
   <div class="intro-card">
     <span class="os-tag">Ordem de Serviço Nº 4512</span>
     <h1>Hoje você é o técnico do provedor</h1>
-    <p>Um cliente novo contratou o plano <b>500 Mega</b>. Sua jornada vai da casa do cliente até o núcleo da rede: instalar a ONT, autorizar na OLT, configurar VLANs no switch, validar a banda e dominar as camadas que explicam tudo isso. Cada missão segue a luz na fibra. 🔦</p>
+    <p>Um cliente novo contratou o plano <b>500 Mega</b>. Sua jornada vai da casa do cliente até o núcleo da rede: instalar a ONT, autorizar na OLT, configurar VLANs no switch e validar a banda. E vão mais fundo nos <b>laboratórios</b>: BGP, MPLS, Q-in-Q, MTU/MSS, enlace de rádio, topologias e o que separa circuitos de pacotes. Seu progresso fica salvo neste navegador. 🔦</p>
   </div>
   <div class="route" id="routeList"></div>
 
@@ -461,6 +502,138 @@ footer{text-align:center;font-size:.74rem;color:var(--ink-soft);margin-top:30px;
   </div>
 </section>
 
+<!-- =================== M11: BGP =================== -->
+<section class="screen" id="scr-m11">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte X do manual</div>
+    <h2>🌐 Política de BGP na borda</h2>
+    <p>Seu AS tem <b>dois trânsitos</b> (A e B) e um <b>peering no IX</b>. Você não muda rota por "métrica mágica": ajusta <b>Local Preference</b> (controla a SAÍDA), <b>AS-Path prepending</b> (afasta um caminho para mexer na ENTRADA) e <b>communities</b>. No fim, um vizinho tenta sequestrar seu prefixo — segure com RPKI.</p>
+    <div id="m11stage"></div>
+  </div>
+</section>
+
+<!-- =================== M12: CIRCUITOS x PACOTES =================== -->
+<section class="screen" id="scr-m12">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte I do manual</div>
+    <h2>📦 Comutação: circuitos × pacotes</h2>
+    <p>Por que a internet é comutada por <b>pacotes</b> e não por <b>circuitos</b>? Rode a animação com 3 fluxos e veja a diferença na prática: o circuito reserva um caminho dedicado (sem colisão, mas desperdiça quando ninguém fala); o pacote fatia tudo e compartilha o meio (eficiente, ao custo de atraso, jitter e perda na fila).</p>
+    <div id="m12stage"></div>
+  </div>
+</section>
+
+<!-- =================== M13: MTU/MSS =================== -->
+<section class="screen" id="scr-m13">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Partes V e XIV do manual</div>
+    <h2>✂️ MTU, MSS e a "falha fantasma" do PPPoE</h2>
+    <p>Chamado clássico: <i>"navega em quase tudo, mas o site do banco trava ao carregar"</i>. O PPPoE rouba 8 bytes (MTU 1492). Se o ICMP "Fragmentation Needed" é filtrado, o PMTUD quebra e os pacotes grandes <b>somem em silêncio</b>. Acompanhe a jornada do pacote e aplique a correção certa no BNG.</p>
+    <div id="m13stage"></div>
+  </div>
+</section>
+
+<!-- =================== M14: Q-in-Q =================== -->
+<section class="screen" id="scr-m14">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte III do manual</div>
+    <h2>🎟️ Q-in-Q: empilhando VLANs</h2>
+    <p>O 802.1Q só tem 12 bits de VID → no máximo <b>4094 VLANs</b>. Pouco para um provedor com milhares de clientes. O <b>802.1ad (Q-in-Q)</b> empilha uma <b>S-VLAN</b> (do provedor) por cima da <b>C-VLAN</b> (do cliente): isola, rastreia e escala. Monte o quadro etiqueta por etiqueta e veja o MTU crescer.</p>
+    <div id="m14stage"></div>
+  </div>
+</section>
+
+<!-- =================== M15: RÁDIO =================== -->
+<section class="screen" id="scr-m15">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte IX do manual</div>
+    <h2>📡 Projeto de enlace de rádio (PtP rural)</h2>
+    <p>Levar internet ao sítio por rádio é um orçamento de potência igual ao da PON, mas no ar. Mexa nos controles e veja <b>FSPL</b>, <b>EIRP</b> (que a Anatel limita), a <b>1ª zona de Fresnel</b> (precisa de ≥60% livre) e a <b>margem de desvanecimento</b> reagirem ao vivo. Cumpra os 3 desafios.</p>
+    <div id="m15stage"></div>
+  </div>
+</section>
+
+<!-- =================== M16: TOPOLOGIAS =================== -->
+<section class="screen" id="scr-m16">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Partes I e V do manual</div>
+    <h2>🗺️ Topologia física × lógica</h2>
+    <p>A regra que confunde todo iniciante: <b>como o cabo é ligado</b> (física) nem sempre é <b>como os dados fluem</b> (lógica). A árvore PON é fisicamente uma árvore, mas logicamente um barramento de <i>broadcast</i>. Monte cada cenário e acerte a classificação.</p>
+    <div id="m16stage"></div>
+  </div>
+</section>
+
+<!-- =================== M17: MPLS =================== -->
+<section class="screen" id="scr-m17">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte XII do manual</div>
+    <h2>🏷️ MPLS: comutação por rótulos</h2>
+    <p>No núcleo MPLS o pacote não é roteado por IP em cada salto — ele segue um <b>caminho de rótulos (LSP)</b>. O <b>PE de entrada</b> empilha o rótulo (<i>push</i>), os roteadores <b>P</b> trocam só o rótulo (<i>swap</i>) sem olhar o IP, e o <b>PE de saída</b> remove (<i>pop</i>). Conduza o pacote salto a salto.</p>
+    <div id="m17stage"></div>
+  </div>
+</section>
+
+<!-- =================== M18: ROTEAMENTO =================== -->
+<section class="screen" id="scr-m18">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte IV do manual</div>
+    <h2>🧭 Roteamento: longest-prefix match</h2>
+    <p>O roteador tem uma tabela com várias rotas que "casam" com o mesmo destino. A regra é uma só e inviolável: <b>vence sempre o prefixo mais específico</b> (a máscara mais longa). A rota default (<span class="mono">0.0.0.0/0</span>) só pega o que nada mais casa. Para cada pacote, toque na rota que o roteador escolhe.</p>
+    <div id="m18stage"></div>
+  </div>
+</section>
+
+<!-- =================== M19: VLSM =================== -->
+<section class="screen" id="scr-m19">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte IV do manual</div>
+    <h2>🧮 VLSM: recortando um /24</h2>
+    <p>Você recebeu o bloco <b class="mono">192.168.10.0/24</b> e precisa atender 5 setores com tamanhos diferentes. A regra de ouro: <b>aloque do MAIOR para o menor</b> e escolha o <b>menor bloco que ainda cabe</b> (lembre: 2 endereços vão para rede e broadcast). Defina o prefixo de cada setor e veja o mapa fechar sem sobreposição.</p>
+    <div id="m19stage"></div>
+  </div>
+</section>
+
+<!-- =================== M20: DHCP DORA =================== -->
+<section class="screen" id="scr-m20">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte V do manual</div>
+    <h2>📨 DHCP: o aperto de mão DORA</h2>
+    <p>Um cliente acabou de ligar e <b>não tem IP nenhum</b>. Como ele consegue um? Pelo DORA: <b>D</b>iscover → <b>O</b>ffer → <b>R</b>equest → <b>A</b>ck. No caminho, o <b>DHCP Relay</b> (na OLT/switch) carimba a <b>Opção 82</b> com a porta física de origem — a base do IPoE rastreável e anti-fraude. Conduza cada passo.</p>
+    <div id="m20stage"></div>
+  </div>
+</section>
+
+<!-- =================== M21: IPTV / MULTICAST =================== -->
+<section class="screen" id="scr-m21">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte XIII do manual</div>
+    <h2>📺 IPTV, multicast e IGMP snooping</h2>
+    <p>A fonte de IPTV envia <b>uma única cópia</b> do canal (grupo <span class="mono">239.1.1.10</span>) e a rede replica só onde há quem pediu. O <b>IGMP snooping</b> no switch "escuta" os <i>joins</i> e entrega o canal apenas nas portas certas. Sem ele, o multicast vira <b>broadcast</b> e inunda todas as portas. Marque quem deu join, ligue/desligue o snooping e transmita.</p>
+    <div id="m21stage"></div>
+  </div>
+</section>
+
+<!-- =================== M22: WI-FI 1/6/11 =================== -->
+<section class="screen" id="scr-m22">
+  <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
+  <div class="panel">
+    <div class="step-eyebrow">Laboratório · Parte XIII do manual</div>
+    <h2>🛜 Wi-Fi: planejamento de canais (2,4 GHz)</h2>
+    <p>Quatro APs vizinhos se enxergam (A↔B↔C↔D). Em 2,4 GHz cada canal ocupa ~22 MHz, mas os canais são espaçados de só 5 MHz — então <b>só 1, 6 e 11 não se sobrepõem</b>. Escolha o canal de cada AP e <b>zere a interferência</b>. O "automático" que escolhe canal 3 ou 9 soma a interferência de dois vizinhos.</p>
+    <div id="m22stage"></div>
+  </div>
+</section>
+
 <!-- =================== CERTIFICADO =================== -->
 <section class="screen" id="scr-cert">
   <div class="backrow"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>
@@ -479,16 +652,32 @@ footer{text-align:center;font-size:.74rem;color:var(--ink-soft);margin-top:30px;
 </section>
 
 </main>
-<footer>Baseado nos capítulos de ONT, OLT, provisionamento PON, switching/VLAN, orçamento de potência e modelos OSI/TCP-IP do manual de redes.</footer>
+<footer>Baseado no Manual de Redes de Computadores (14 partes): ONT/OLT, PON e orçamento de potência, switching/VLAN/Q-in-Q, OSI/TCP-IP, sub-redes/CIDR, BGP, MPLS, MTU/MSS, rádio (FSPL/Fresnel/EIRP), NOC/DDoS e troubleshooting.</footer>
 <script>
 /* ============ ESTADO ============ */
 const S = {
   xp: 0,
-  done: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false},
-  badges: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false,exam:false},
+  done: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false,m11:false,m12:false,m13:false,m14:false,m15:false,m16:false,m17:false,m18:false,m19:false,m20:false,m21:false,m22:false},
+  badges: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false,m11:false,m12:false,m13:false,m14:false,m15:false,m16:false,m17:false,m18:false,m19:false,m20:false,m21:false,m22:false,exam:false},
   ontRx: -13.4,
   plan: null,
 };
+
+/* ============ PERSISTÊNCIA (localStorage) ============ */
+const SAVE_KEY = 'operacao-fibra-v1';
+function saveState(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({xp:S.xp, done:S.done, badges:S.badges, scores:(typeof E!=='undefined'?E.scores:{})})); }catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY); if(!raw) return;
+    const d = JSON.parse(raw);
+    if(typeof d.xp==='number') S.xp = d.xp;
+    if(d.done) Object.keys(S.done).forEach(k=>{ if(k in d.done) S.done[k]=!!d.done[k]; });
+    if(d.badges) Object.keys(S.badges).forEach(k=>{ if(k in d.badges) S.badges[k]=!!d.badges[k]; });
+    if(d.scores && typeof E!=='undefined') E.scores = d.scores;
+  }catch(e){}
+}
 const BADGES = [
   {id:'m1', ico:'🔌', name:'Instalador de Campo', desc:'Instalou a ONT e leu a potência óptica'},
   {id:'m2', ico:'🗝️', name:'Mestre da OLT', desc:'Autorizou a ONT e subiu o PPPoE'},
@@ -500,6 +689,18 @@ const BADGES = [
   {id:'m8', ico:'📈', name:'Leitor de OTDR', desc:'Classificou todos os eventos do traço'},
   {id:'m9', ico:'🛡️', name:'Defensor do NOC', desc:'Mitigou um DDoS de 9,4 Gbps com RTBH'},
   {id:'m10', ico:'🔢', name:'Mestre das Sub-redes', desc:'Resolveu 3 sub-redes pela receita dos 5 passos'},
+  {id:'m11', ico:'🌐', name:'Roteador de Borda', desc:'Equilibrou tráfego de saída/entrada e barrou um hijack com RPKI'},
+  {id:'m12', ico:'📦', name:'Comutador', desc:'Entendeu circuitos × pacotes na prática'},
+  {id:'m13', ico:'✂️', name:'Domador do MTU', desc:'Matou a falha fantasma com MSS clamping'},
+  {id:'m14', ico:'🎟️', name:'Empilhador de VLANs', desc:'Dominou o Q-in-Q do provedor'},
+  {id:'m15', ico:'📡', name:'Engenheiro de Rádio', desc:'Fechou um PtP liberando Fresnel dentro do limite da Anatel'},
+  {id:'m16', ico:'🗺️', name:'Arquiteto de Redes', desc:'Distinguiu topologia física de lógica'},
+  {id:'m17', ico:'🏷️', name:'Comutador de Rótulos', desc:'Empilhou e comutou rótulos ao longo do LSP'},
+  {id:'m18', ico:'🧭', name:'Roteador Mestre', desc:'Resolveu o longest-prefix match em qualquer tabela'},
+  {id:'m19', ico:'🧮', name:'Planejador IP', desc:'Recortou um /24 com VLSM, do maior bloco ao menor'},
+  {id:'m20', ico:'📨', name:'Mestre do DHCP', desc:'Conduziu o DORA e o carimbo da Opção 82'},
+  {id:'m21', ico:'📺', name:'Operador de IPTV', desc:'Entregou multicast só a quem deu join (IGMP snooping)'},
+  {id:'m22', ico:'🛜', name:'Domador do Wi-Fi', desc:'Planejou canais 1/6/11 sem interferência'},
   {id:'exam', ico:'🎓', name:'Certificação Completa', desc:'Aprovado nos 14 módulos do manual'},
 ];
 const MISSIONS = [
@@ -513,12 +714,24 @@ const MISSIONS = [
   {id:'m8', ico:'📈', t:'Lab: Leitura de OTDR', d:'Um traço interativo com 5 eventos: classifique fusão, conector, curvatura, splitter e fim — alternando 1310/1550 nm.', req:null},
   {id:'m9', ico:'🛡️', t:'NOC sob ataque (DDoS)', d:'Uplink saturando às 21h: investigue pelo flow no terminal e escolha a mitigação certa antes de a cidade cair.', req:null},
   {id:'m10', ico:'🔢', t:'Treino de sub-redes', d:'Exercícios gerados na hora: rede, broadcast e hosts úteis pela receita dos 5 passos e o número mágico.', req:null},
+  {id:'m11', ico:'🌐', t:'Lab: Política BGP', d:'Local Preference, AS-Path prepending e communities para escolher por onde sair e como entra o tráfego — e barre um route hijack com RPKI.', req:null},
+  {id:'m12', ico:'📦', t:'Lab: Circuitos × Pacotes', d:'Veja lado a lado o circuito dedicado (reserva o caminho) e a comutação de pacotes (compartilha o meio com atraso, jitter e perda).', req:null},
+  {id:'m13', ico:'✂️', t:'Lab: MTU/MSS & PPPoE', d:'A "falha fantasma": pacote de 1500 trava no MTU 1492 do PPPoE. Acompanhe o PMTUD quebrar e o MSS clamping salvar o dia.', req:null},
+  {id:'m14', ico:'🎟️', t:'Lab: Q-in-Q', d:'Empilhe a S-VLAN do provedor sobre a C-VLAN do cliente, veja os +4 bytes por tag e como o 802.1ad escala além de 4094 VLANs.', req:null},
+  {id:'m15', ico:'📡', t:'Lab: Enlace de rádio', d:'Projete um PtP rural: FSPL, EIRP (limite Anatel), 1ª zona de Fresnel e fade margin recalculando ao vivo com os sliders.', req:null},
+  {id:'m16', ico:'🗺️', t:'Lab: Topologias', d:'Física × lógica na prática: a árvore PON que é broadcast lógico, o anel ERPS que reconverge e a estrela do switch. Classifique cada uma.', req:null},
+  {id:'m17', ico:'🏷️', t:'Lab: MPLS', d:'Empurre o pacote pelo LSP: o PE de entrada empilha o rótulo, os P comutam só por rótulo (swap) e o PE de saída remove (pop).', req:null},
+  {id:'m18', ico:'🧭', t:'Lab: Roteamento (LPM)', d:'Monte mentalmente a tabela e escolha a rota vencedora: o pacote sempre segue o prefixo MAIS específico (longest-prefix match). A default só pega a sobra.', req:null},
+  {id:'m19', ico:'🧮', t:'Lab: VLSM', d:'Recorte um /24 para 5 setores com necessidades diferentes — do maior bloco para o menor — sem desperdício nem sobreposição.', req:null},
+  {id:'m20', ico:'📨', t:'Lab: DHCP DORA', d:'Conduza Discover→Offer→Request→Ack, entenda quem é broadcast e quem é unicast, e veja o relay carimbar a Opção 82.', req:null},
+  {id:'m21', ico:'📺', t:'Lab: IPTV & multicast', d:'Ligue o IGMP snooping e veja a TV chegar SÓ a quem deu join — ou inundar todas as portas quando ele está desligado.', req:null},
+  {id:'m22', ico:'🛜', t:'Lab: Wi-Fi 1/6/11', d:'Planeje os canais de 4 APs vizinhos em 2,4 GHz e zere a interferência — descubra por que só 1, 6 e 11 não se sobrepõem.', req:null},
 ];
 
 /* ============ UTIL ============ */
 const $ = s => document.querySelector(s);
 function addXP(n, ev){
-  S.xp += n; $('#xpVal').textContent = S.xp;
+  S.xp += n; $('#xpVal').textContent = S.xp; saveState();
   const f = document.createElement('div');
   f.className = 'xp-float'; f.textContent = '+'+n+' XP';
   const x = (ev && ev.clientX) ? ev.clientX : window.innerWidth/2;
@@ -538,7 +751,7 @@ function renderBadgesMini(){
     `<div class="badge-dot ${S.badges[b.id]?'won':''}" title="${b.name}">${b.ico}</div>`).join('');
 }
 function completeMission(id){
-  if(!S.done[id]){ S.done[id]=true; S.badges[id]=true; renderBadgesMini(); }
+  if(!S.done[id]){ S.done[id]=true; S.badges[id]=true; renderBadgesMini(); saveState(); }
   if(Object.values(S.done).every(v=>v)){ setTimeout(()=>show('scr-cert'),600); renderCert(); }
 }
 function show(id){
@@ -559,6 +772,18 @@ function openMission(id){
   if(id==='m8') initM8();
   if(id==='m9') initM9();
   if(id==='m10') initM10();
+  if(id==='m11') initM11();
+  if(id==='m12') initM12();
+  if(id==='m13') initM13();
+  if(id==='m14') initM14();
+  if(id==='m15') initM15();
+  if(id==='m16') initM16();
+  if(id==='m17') initM17();
+  if(id==='m18') initM18();
+  if(id==='m19') initM19();
+  if(id==='m20') initM20();
+  if(id==='m21') initM21();
+  if(id==='m22') initM22();
   show('scr-'+id);
 }
 function renderMap(){
@@ -574,7 +799,11 @@ function renderCert(){
   $('#badgeGrid').innerHTML = BADGES.map(b=>
     `<div class="badge-card ${S.badges[b.id]?'won':''}"><span class="bi">${b.ico}</span><b>${b.name}</b>${b.desc}</div>`).join('');
 }
-function resetGame(){ location.reload(); }
+function resetGame(){
+  if(!confirm('Apagar TODO o progresso (XP, missões, badges e notas da prova) e recomeçar do zero?')) return;
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  location.reload();
+}
 
 /* ============ ONT SVG (compartilhada) ============ */
 function ontSVG(leds){
@@ -1508,7 +1737,7 @@ function settleQ(ok, q, e, extra){
 }
 function quizEnd(){
   const total=E.mod.qs.length, pct=Math.round(100*E.hits/total), passed=pct>=70;
-  E.scores[E.mod.id]=E.hits;
+  E.scores[E.mod.id]=E.hits; saveState();
   if(passed) addXP(40);
   const allPassed = EXAM.every(m=>passMod(m.id));
   if(allPassed && !S.badges.exam){ S.badges.exam=true; addXP(200); renderBadgesMini(); }
@@ -1885,7 +2114,798 @@ function m10Check(e){
   }
 }
 
+/* ============ M11: LAB BGP ============ */
+let m11;
+const M11SEL = "class='lab-sel'";
+function initM11(){
+  m11 = {c1:false,c2:false,c3:false};
+  const opt = v => `<option value="50">50 (evitar)</option><option value="100" ${v===100?'selected':''}>100 (padrão)</option><option value="200">200 (preferir)</option>`;
+  $('#m11stage').innerHTML = `
+  <div class="osi-cols" style="margin-top:14px">
+    <div>
+      <div class="contract" style="margin-top:0"><h4>🎛️ Suas alavancas de BGP</h4>
+        <div style="display:grid;gap:10px;margin-top:8px;font-size:.84rem">
+          <div style="font-weight:700;color:var(--ink)">↗ SAÍDA · Local Preference <small style="font-weight:400">(maior vence)</small></div>
+          <label>Trânsito A (pago)<select id="b11lpA" ${M11SEL}>${opt(100)}</select></label>
+          <label>Trânsito B (pago)<select id="b11lpB" ${M11SEL}>${opt(100)}</select></label>
+          <label>Peering IX.br (barato, só rotas locais)<select id="b11lpIX" ${M11SEL}>${opt(100)}</select></label>
+          <div style="font-weight:700;color:var(--ink);margin-top:6px">↙ ENTRADA · AS-Path prepending <small style="font-weight:400">(mais prepends = caminho mais longo = menos usado)</small></div>
+          <label>Prepends no Trânsito A: <b id="b11ppAl" class="mono">0</b><input type="range" id="b11ppA" min="0" max="3" value="0" style="width:100%"></label>
+          <label>Prepends no Trânsito B: <b id="b11ppBl" class="mono">0</b><input type="range" id="b11ppB" min="0" max="3" value="0" style="width:100%"></label>
+          <label class="toggle-row" style="margin-top:6px"><input type="checkbox" id="b11rpki"> <b>Validação RPKI/ROA ativa na borda</b></label>
+        </div>
+      </div>
+      <button class="btn ghost" id="b11hij" style="margin-top:12px;width:100%">🏴‍☠️ Um vizinho anuncia seu /24 (simular hijack)</button>
+    </div>
+    <div>
+      <div class="meter" style="max-width:none;margin:0;text-align:left;padding:16px">
+        <div class="lbl">📟 Mesa de decisão da borda</div>
+        <div id="b11out" style="font-family:'IBM Plex Mono';font-size:.8rem;line-height:1.75;margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+  <h3 class="disp" style="margin-top:20px">🎯 Desafios</h3>
+  <div class="choices" id="b11goals" style="margin-top:8px"></div>
+  <div class="feedback" id="m11f"></div>
+  <div id="m11end"></div>`;
+  m11.hijack=false;
+  ['b11lpA','b11lpB','b11lpIX','b11ppA','b11ppB'].forEach(id=> $('#'+id).oninput = m11Calc);
+  $('#b11rpki').onchange = m11Calc;
+  $('#b11hij').onclick = ()=>{ m11.hijack=!m11.hijack; $('#b11hij').classList.toggle('gold', m11.hijack); m11Calc(); };
+  m11Calc();
+}
+function m11Calc(){
+  const lpA=+$('#b11lpA').value, lpB=+$('#b11lpB').value, lpIX=+$('#b11lpIX').value;
+  const ppA=+$('#b11ppA').value, ppB=+$('#b11ppB').value, rpki=$('#b11rpki').checked;
+  $('#b11ppAl').textContent=ppA; $('#b11ppBl').textContent=ppB;
+  // saída para rede DO IX: candidatos IX, A, B
+  const outIX = lpIX>=lpA && lpIX>=lpB ? 'Peering IX.br' : (lpA>=lpB?'Trânsito A':'Trânsito B');
+  // saída para resto da internet: só trânsitos
+  const outNet = lpA>=lpB?'Trânsito A':'Trânsito B';
+  // entrada: caminho de AS-Path mais curto é preferido pela internet
+  const entrada = ppA<ppB ? 'Trânsito A' : ppB<ppA ? 'Trânsito B' : 'dividida A/B (mesmo AS-Path)';
+  let hij;
+  if(!m11.hijack) hij = '— sem anúncios suspeitos —';
+  else if(rpki) hij = '🛡️ ROA INVÁLIDO → anúncio DESCARTADO. Seu prefixo está seguro.';
+  else hij = '🚨 /24 mais específico aceito! Tráfego sendo DESVIADO ao atacante (longest-prefix vence).';
+  $('#b11out').innerHTML =
+    `<b>Saída p/ redes do IX:</b> <span class="hl">${outIX}</span><br>`+
+    `<b>Saída p/ resto da internet:</b> <span class="hl">${outNet}</span><br>`+
+    `<b>Entrada (como a internet te alcança):</b> <span class="hl">${entrada}</span><br>`+
+    `<b>Segurança de rota:</b> ${hij}`;
+  const goals = [
+    {k:'c1', t:'1) Economize trânsito: faça o tráfego para as redes do IX.br SAIR pelo peering', ok: lpIX>lpA && lpIX>lpB},
+    {k:'c2', t:'2) Engenharia de entrada: faça a internet preferir te alcançar pelo Trânsito A', ok: ppB>ppA},
+    {k:'c3', t:'3) Defenda-se: com o hijack ativo, invalide o anúncio falso com RPKI/ROA', ok: m11.hijack && rpki},
+  ];
+  goals.forEach(g=>{ if(g.ok && !m11[g.k]){ m11[g.k]=true; addXP(30);
+    fb($('#m11f'),'ok','✅ Desafio '+g.t.charAt(0)+' cumprido! '+(
+      g.k==='c1'?'Local Preference é a alavanca de SAÍDA: peering local corta custo e latência; trânsito pago só para o que o IX não alcança.':
+      g.k==='c2'?'Prepending alonga o AS-Path anunciado por B, então a internet passa a preferir o caminho mais curto (A) para te alcançar — sem mexer no Local Pref do vizinho.':
+      'RPKI/ROA declara quem pode originar seu prefixo. Sem isso, o /24 mais específico vence por longest-prefix e sequestra seu tráfego — afetaria a internet inteira.'));
+  }});
+  $('#b11goals').innerHTML = goals.map(g=>`<div class="choice ${m11[g.k]?'right':''}" style="cursor:default">${m11[g.k]?'✅ ':'⬜ '}${g.t}</div>`).join('');
+  if(m11.c1&&m11.c2&&m11.c3&&!S.done.m11){
+    completeMission('m11');
+    $('#m11end').innerHTML = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Roteador de Borda!</b> Local Pref controla a saída, prepending/communities moldam a entrada, e RPKI + filtros + max-prefix são a higiene que impede que um anúncio errado vire problema global.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m17')">🏷️ Lab MPLS →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+  }
+}
+
+/* ============ M12: CIRCUITOS x PACOTES ============ */
+let m12;
+function initM12(){
+  m12 = {q1:false,q2:false,ran:false};
+  $('#m12stage').innerHTML = `
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+    <button class="btn gold" id="b12run">▶ Rodar os 3 fluxos</button>
+    <button class="btn ghost" id="b12reset">↺ Limpar</button>
+  </div>
+  <div class="osi-cols" style="margin-top:16px">
+    <div class="encap-stage" style="margin-top:0">
+      <h4 class="disp">☎️ Comutação de circuitos</h4>
+      <p style="font-size:.78rem;color:var(--ink-soft);min-height:48px">Cada fluxo RESERVA o enlace inteiro pela sua duração. Sem colisão — mas o silêncio (listras) também ocupa o canal e desperdiça capacidade.</p>
+      <div class="m12grid" id="b12circ"></div>
+      <div id="b12circStat" class="mono" style="font-size:.78rem;margin-top:10px;min-height:40px"></div>
+    </div>
+    <div class="encap-stage" style="margin-top:0">
+      <h4 class="disp">📦 Comutação de pacotes</h4>
+      <p style="font-size:.78rem;color:var(--ink-soft);min-height:48px">Os 3 fluxos fatiam tudo e disputam o MESMO enlace por demanda. Uso altíssimo — o preço é a fila: atraso, jitter e, quando o buffer enche, perda (vermelho).</p>
+      <div class="m12grid" id="b12pkt"></div>
+      <div id="b12pktStat" class="mono" style="font-size:.78rem;margin-top:10px;min-height:40px"></div>
+    </div>
+  </div>
+  <div class="kfact" style="margin-top:16px"><b>Por que a internet escolheu pacotes:</b> o compartilhamento estatístico aproveita o silêncio de uns para servir o tráfego de outros. A eficiência vem com variabilidade (atraso/jitter/perda) — e são as camadas superiores (TCP, buffers de jitter) que domam isso.</div>
+  <div id="m12quiz" style="margin-top:16px"></div>`;
+  $('#b12run').onclick = m12Run;
+  $('#b12reset').onclick = initM12;
+  m12Build(); m12Quiz();
+}
+function m12Build(){
+  // 18 slots, vazios
+  const empty = Array.from({length:18},()=>'<div class="m12slot"></div>').join('');
+  $('#b12circ').innerHTML = empty; $('#b12pkt').innerHTML = empty;
+  $('#b12circStat').textContent=''; $('#b12pktStat').textContent='';
+}
+function m12Run(){
+  m12.ran=true;
+  // demanda real de dados de cada fluxo (slots que TÊM dados)
+  // circuito: A reserva 0-5, B 6-11, C 12-17 (serial). Dados reais: A em 0,1,4; B em 6,9; C em 12,13,17 => 8 de 18 úteis
+  const circ = [
+    {s:'A',d:1},{s:'A',d:1},{s:'A',d:0},{s:'A',d:0},{s:'A',d:1},{s:'A',d:0},
+    {s:'B',d:1},{s:'B',d:0},{s:'B',d:0},{s:'B',d:1},{s:'B',d:0},{s:'B',d:0},
+    {s:'C',d:1},{s:'C',d:1},{s:'C',d:0},{s:'C',d:0},{s:'C',d:0},{s:'C',d:1},
+  ];
+  // pacote: mesmos 8 dados (A:3,B:2,C:3) intercalados nos primeiros slots; 1 colisão => 1 drop+requeue; resto livre
+  const pkt = [
+    {s:'A'},{s:'B'},{s:'C'},{s:'A'},{s:'C'},{s:'B'},{s:'A',drop:true},{s:'A'},{s:'C'},
+    null,null,null,null,null,null,null,null,null
+  ];
+  const cc = $('#b12circ').children, pc = $('#b12pkt').children;
+  [...cc,...pc].forEach(el=>el.className='m12slot');
+  let i=0;
+  const tick = setInterval(()=>{
+    if(i<18){
+      const c=circ[i], ce=cc[i];
+      ce.classList.add(c.d? ('s'+c.s) : 'idle');
+      ce.textContent = c.d? c.s : '·';
+      const p=pkt[i], pe=pc[i];
+      if(p){ pe.classList.add(p.drop?'drop':('s'+p.s)); pe.textContent=p.drop?'✕':p.s; }
+    }
+    i++;
+    if(i>=18){
+      clearInterval(tick);
+      $('#b12circStat').innerHTML = '<b>8 de 18</b> slots com dados reais → uso ≈ <span style="color:var(--alarm)">44%</span>. B e C esperaram a vez. <br>Caminho garantido, latência estável — capacidade ociosa desperdiçada.';
+      $('#b12pktStat').innerHTML = '<b>8 dados em 9</b> slots → uso ≈ <span style="color:var(--apc)">89%</span>; 9 slots livres p/ outros. <br>1 colisão virou perda (✕) e retransmissão: eis o atraso/jitter.';
+    }
+  }, 90);
+}
+function m12Quiz(){
+  $('#m12quiz').innerHTML = `<h3 class="disp">🧠 Prove que entendeu</h3>
+  <div style="font-weight:600;margin-top:8px">1) A internet (e a rede do provedor) é comutada por pacotes principalmente porque…</div>
+  <div class="choices" id="b12q1">
+    <button class="choice" data-ok="0">Garante um caminho dedicado e latência constante para cada cliente</button>
+    <button class="choice" data-ok="1">O compartilhamento estatístico usa o silêncio de uns para servir outros — muito mais eficiente</button>
+    <button class="choice" data-ok="0">Pacotes nunca se perdem nem atrasam</button>
+  </div>
+  <div class="feedback" id="b12q1f"></div>
+  <div style="font-weight:600;margin-top:14px">2) O preço dessa eficiência, que as camadas de cima precisam domar, é…</div>
+  <div class="choices" id="b12q2">
+    <button class="choice" data-ok="1">Variabilidade: atraso, jitter e perda quando a fila enche</button>
+    <button class="choice" data-ok="0">Consumo de energia maior nos roteadores</button>
+    <button class="choice" data-ok="0">Impossibilidade de criptografar o tráfego</button>
+  </div>
+  <div class="feedback" id="b12q2f"></div>
+  <div id="m12end"></div>`;
+  m12Bind('b12q1','q1','✅ Isso. Comutação de pacotes = multiplexação estatística: eficiente por compartilhar o meio sob demanda.');
+  m12Bind('b12q2','q2','✅ Exato. Atraso/jitter/perda são o custo do compartilhamento — TCP e buffers de jitter existem para lidar com isso.');
+}
+function m12Bind(wrapId, key, okMsg){
+  const wrap=$('#'+wrapId);
+  wrap.querySelectorAll('.choice').forEach(c=>{
+    c.onclick=e=>{ if(m12[key]) return;
+      const ok=c.dataset.ok==='1';
+      if(ok){ m12[key]=true; lockChoices(wrap,c,true); wrap.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none'); addXP(20,e); fb($('#'+wrapId+'f'),'ok',okMsg); m12Done(); }
+      else { c.classList.add('wrong'); fb($('#'+wrapId+'f'),'bad','❌ Não é essa. Lembre do que a animação mostrou: circuito = reserva (desperdício); pacote = compartilha (eficiência com fila).'); }
+    };
+  });
+}
+function m12Done(){
+  if(m12.q1 && m12.q2 && !S.done.m12){
+    completeMission('m12');
+    $('#m12end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:14px">🏅 <b>Badge: Comutador!</b> Topologia/banda à parte, a essência do provedor é estatística: dimensione uplinks para 70–80% no pico — perto da saturação a fila enche e a latência dispara (bufferbloat), mesmo com banda média sobrando.</div>
+    <div style="margin-top:12px"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>`;
+  }
+}
+
+/* ============ M13: MTU / MSS / PPPoE ============ */
+let m13;
+function initM13(){
+  m13 = {fixed:false};
+  $('#m13stage').innerHTML = `
+  <div class="contract" style="margin-top:14px;max-width:none"><h4>🧪 Bancada do pacote</h4>
+    <div style="display:grid;gap:12px;margin-top:8px;font-size:.85rem">
+      <label>Tamanho do pacote (com flag DF/“não fragmentar”): <b id="b13szl" class="mono">1500 bytes</b>
+        <input type="range" id="b13sz" min="500" max="1500" step="20" value="1500" style="width:100%"></label>
+      <label class="toggle-row"><input type="checkbox" id="b13icmp"> ICMP “Fragmentation Needed” (tipo 3/4) liberado de volta à origem</label>
+    </div>
+  </div>
+  <div class="encap-stage" style="margin-top:16px;text-align:center">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;font-family:'IBM Plex Mono';font-size:.74rem">
+      <span>🖥️ CPE<br><small>MTU 1500</small></span><span class="mpls-arrow">→</span>
+      <span id="b13pktpos" class="pktbubble">pacote</span><span class="mpls-arrow">→</span>
+      <span>📟 BNG/PPPoE<br><small style="color:var(--alarm)">MTU 1492</small></span><span class="mpls-arrow">→</span>
+      <span>🌐 Internet</span>
+    </div>
+    <div id="b13verdict" style="margin-top:14px;font-size:.9rem;font-weight:600;min-height:48px"></div>
+  </div>
+  <div id="b13fix" style="margin-top:16px"></div>
+  <div class="feedback" id="m13f"></div>
+  <div id="m13end"></div>`;
+  $('#b13sz').oninput = m13Calc; $('#b13icmp').onchange = m13Calc;
+  m13Calc();
+}
+function m13Calc(){
+  const sz=+$('#b13sz').value, icmp=$('#b13icmp').checked;
+  $('#b13szl').textContent = sz+' bytes';
+  const pkt=$('#b13pktpos'); pkt.textContent = sz+'B';
+  let v;
+  if(sz<=1492){ pkt.style.borderColor='var(--apc)'; v='✅ <span style="color:var(--apc)">Passa.</span> Cabe no MTU 1492 do PPPoE — chega inteiro à internet.'; }
+  else if(icmp){ pkt.style.borderColor='#e8a13a'; v='↩️ <span style="color:#8a6a00">Funciona, mas frágil.</span> O BNG devolve ICMP “Frag Needed”; o PMTUD reduz o pacote na origem. Depende 100% do ICMP não ser filtrado lá fora.'; }
+  else { pkt.style.borderColor='var(--alarm)'; v='🚫 <span style="color:var(--alarm)">Black hole!</span> Pacote grande com DF + ICMP filtrado = sumiço silencioso. O site grande (banco) “trava ao carregar”, mas o ping e os sites pequenos funcionam.'; }
+  $('#b13verdict').innerHTML = v;
+  // só mostra o desafio de correção quando o sintoma está reproduzido
+  if(sz>1492 && !icmp && !m13.fixed){
+    $('#b13fix').innerHTML = `<h3 class="disp">🔧 Você reproduziu o chamado. Qual a correção DEFINITIVA no provedor?</h3>
+    <div class="choices" id="b13opts" style="margin-top:8px">
+      <button class="choice" data-k="dns">Trocar o DNS do cliente para um público (8.8.8.8)</button>
+      <button class="choice" data-k="mss">Aplicar MSS clamping (MSS 1452) no BNG para as sessões PPPoE</button>
+      <button class="choice" data-k="fmt">Formatar o computador do cliente</button>
+      <button class="choice" data-k="icmp">Parar de filtrar o ICMP tipo 3 código 4 na borda</button>
+    </div>`;
+    bindEl();
+  } else if(m13.fixed){
+    // mantém estado resolvido
+  } else {
+    $('#b13fix').innerHTML = `<div class="hint-tag">Dica: arraste o tamanho para 1500 e DESLIGUE o ICMP para reproduzir a falha real do chamado.</div>`;
+  }
+  function bindEl(){
+    $('#b13opts').querySelectorAll('.choice').forEach(c=>{
+      c.onclick=e=>{ if(m13.fixed) return;
+        const k=c.dataset.k, wrap=$('#b13opts');
+        if(k==='mss'){
+          m13.fixed=true; lockChoices(wrap,c,true); wrap.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+          addXP(40,e); completeMission('m13');
+          fb($('#m13f'),'ok','✅ Correção certa! MSS clamping faz o BNG reescrever o MSS do SYN para 1452 (= MTU 1492 − 20 IP − 20 TCP). Assim os dois lados nunca tentam mandar segmentos grandes demais — e a falha some sem depender do ICMP de ninguém.');
+          $('#m13end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:14px">🏅 <b>Badge: Domador do MTU!</b> Sintoma seletivo (alguns sites travam, ping vai, sites pequenos abrem) = pense MTU/MSS antes de culpar o destino. PPPoE = 1492 → MSS 1452. Em túneis (VPN/Q-in-Q) a conta diminui ainda mais.</div>
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m14')">🎟️ Lab Q-in-Q →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+        } else {
+          c.classList.add('wrong');
+          const why = k==='dns'?'DNS resolve o NOME — aqui o nome resolve e o site começa a abrir e trava. Não é DNS.':
+            k==='fmt'?'O PC está bom: ping e sites pequenos funcionam. O problema é o tamanho do pacote no caminho, não a máquina.':
+            'Liberar o ICMP faz o PMTUD voltar a funcionar (ajuda!), mas você não controla a filtragem do resto da internet. A correção robusta e sob seu controle é o MSS clamping no BNG.';
+          fb($('#m13f'),'bad','❌ '+why);
+        }
+      };
+    });
+  }
+}
+
+/* ============ M14: Q-in-Q ============ */
+let m14;
+function initM14(){
+  m14 = {c:false, s:false, checked:false};
+  $('#m14stage').innerHTML = `
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+    <button class="btn ghost" id="b14c">➕ C-VLAN (cliente · VID 1101)</button>
+    <button class="btn ghost" id="b14s">➕ S-VLAN (provedor · VID 300)</button>
+    <button class="btn ghost" id="b14reset">↺ Quadro limpo</button>
+  </div>
+  <div class="framewrap" id="b14frame"></div>
+  <div id="b14info" style="margin-top:10px;font-size:.85rem"></div>
+  <div id="b14quiz" style="margin-top:16px"></div>
+  <div class="feedback" id="m14f"></div>
+  <div id="m14end"></div>`;
+  $('#b14c').onclick = ()=>{ m14.c=!m14.c; m14Draw(); };
+  $('#b14s').onclick = ()=>{ m14.s=!m14.s; m14Draw(); };
+  $('#b14reset').onclick = ()=>{ m14.c=false; m14.s=false; m14Draw(); };
+  m14Draw();
+}
+function m14Draw(){
+  let segs = '<div class="fseg mac">MAC dst+src<small>12 B</small></div>';
+  if(m14.s) segs += '<div class="fseg stag">S-TAG<small>0x88a8 · VID 300</small></div>';
+  if(m14.c) segs += '<div class="fseg ctag">C-TAG<small>0x8100 · VID 1101</small></div>';
+  segs += '<div class="fseg etype">EtherType<small>0x0800</small></div><div class="fseg pay">Payload (IP…)<small>até 1500 B</small></div>';
+  $('#b14frame').innerHTML = segs;
+  const tags = (m14.c?1:0)+(m14.s?1:0);
+  const mtu = 1518 + tags*4; // quadro completo c/ FCS; foco didático no +4 por tag
+  let msg = `Tags na pilha: <b>${tags}</b> · cada uma adiciona <b>+4 bytes</b>. Quadro: ${1518}${tags?` + ${tags*4}`:''} = <b>${mtu} B</b>.`;
+  if(m14.s && m14.c) msg += ' <span style="color:var(--apc)">✔ Q-in-Q válido: S-VLAN (externa, do provedor) por cima da C-VLAN (interna, do cliente).</span> O provedor precisa elevar o MTU dos switches do core (jumbo) para não fragmentar.';
+  else if(m14.c && !m14.s) msg += ' Apenas 802.1Q simples (uma tag de cliente).';
+  else if(m14.s && !m14.c) msg += ' <span style="color:#8a6a00">⚠ S-VLAN sem C-VLAN: não é Q-in-Q de assinante — falta a tag interna do cliente.</span>';
+  else msg += ' Quadro sem tag (acesso/untagged).';
+  $('#b14info').innerHTML = msg;
+  if(m14.s && m14.c && !m14.checked) m14Quiz();
+}
+function m14Quiz(){
+  if($('#b14quiz').dataset.shown) return;
+  $('#b14quiz').dataset.shown='1';
+  $('#b14quiz').innerHTML = `<h3 class="disp">🧠 Por que o provedor empilha?</h3>
+  <p style="font-size:.85rem;color:var(--ink-soft)">Você montou a pilha S+C. Qual é a real motivação do Q-in-Q (802.1ad) no provedor?</p>
+  <div class="choices" id="b14opts" style="margin-top:8px">
+    <button class="choice" data-ok="0">Aumentar a velocidade do cliente sem mexer no plano</button>
+    <button class="choice" data-ok="1">Escalar além das 4094 VLANs do 802.1Q e isolar/rastrear cada cliente numa S-VLAN própria</button>
+    <button class="choice" data-ok="0">Criptografar o quadro Ethernet ponta a ponta</button>
+  </div>`;
+  $('#b14opts').querySelectorAll('.choice').forEach(c=>{
+    c.onclick=e=>{ if(m14.checked) return; const wrap=$('#b14opts');
+      if(c.dataset.ok==='1'){ m14.checked=true; lockChoices(wrap,c,true); wrap.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+        addXP(40,e); completeMission('m14');
+        fb($('#m14f'),'ok','✅ Isso. O VID tem só 12 bits → 4094 VLANs, pouco para milhares de clientes. A S-VLAN empilha sobre a C-VLAN: o provedor transporta a VLAN do cliente intacta dentro da sua, isolando e rastreando cada assinante. Custo: +4 bytes por tag no MTU.');
+        $('#m14end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:14px">🏅 <b>Badge: Empilhador de VLANs!</b> S-TAG (TPID 0x88a8) é a etiqueta externa do provedor; C-TAG (0x8100) a interna do cliente. Lembre da conta do MTU: cada tag come 4 bytes — combine com o lab de MTU/MSS.</div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m16')">🗺️ Lab Topologias →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+      } else { c.classList.add('wrong'); fb($('#m14f'),'bad','❌ Q-in-Q não muda velocidade nem cifra nada. Pense na escassez de VLANs (12 bits = 4094) e na necessidade de isolar milhares de clientes.'); }
+    };
+  });
+}
+
+/* ============ M15: ENLACE DE RÁDIO ============ */
+let m15;
+function initM15(){
+  m15 = {c1:false,c2:false,c3:false};
+  $('#m15stage').innerHTML = `
+  <div class="osi-cols" style="margin-top:14px">
+    <div>
+      <div class="contract" style="margin-top:0"><h4>🎛️ Controles do enlace</h4>
+        <div style="display:grid;gap:12px;margin-top:8px;font-size:.85rem">
+          <label>Distância do vão: <b id="r15dl" class="mono">10 km</b>
+            <input type="range" id="r15d" min="1" max="30" step="0.5" value="10" style="width:100%"></label>
+          <label>Frequência
+            <select id="r15f" class="lab-sel"><option value="2400">2,4 GHz (não licenciada)</option><option value="5800" selected>5,8 GHz (não licenciada)</option><option value="11000">11 GHz (licenciada)</option></select></label>
+          <label>Potência do rádio (Tx): <b id="r15pl" class="mono">20 dBm</b>
+            <input type="range" id="r15p" min="0" max="27" value="20" style="width:100%"></label>
+          <label>Ganho de cada antena: <b id="r15gl" class="mono">24 dBi</b>
+            <input type="range" id="r15g" min="12" max="34" value="24" style="width:100%"></label>
+          <label>Folga de visada no meio do vão (acima do obstáculo): <b id="r15hl" class="mono">8 m</b>
+            <input type="range" id="r15h" min="0" max="25" step="0.5" value="8" style="width:100%"></label>
+        </div>
+      </div>
+    </div>
+    <div>
+      <table class="result-table" id="r15tab"></table>
+      <div id="r15verdict" style="margin-top:10px;font-size:.82rem;font-family:'IBM Plex Mono';line-height:1.7"></div>
+    </div>
+  </div>
+  <h3 class="disp" style="margin-top:20px">🎯 Desafios de projeto</h3>
+  <div class="choices" id="r15goals" style="margin-top:8px"></div>
+  <div class="feedback" id="m15f"></div>
+  <div id="m15end"></div>`;
+  ['r15d','r15f','r15p','r15g','r15h'].forEach(id=> $('#'+id).oninput = m15Calc);
+  m15Calc();
+}
+function m15Calc(){
+  const d=+$('#r15d').value, f=+$('#r15f').value, p=+$('#r15p').value, g=+$('#r15g').value, h=+$('#r15h').value;
+  $('#r15dl').textContent=d+' km'; $('#r15pl').textContent=p+' dBm'; $('#r15gl').textContent=g+' dBi'; $('#r15hl').textContent=h+' m';
+  const fGHz=f/1000, cable=1, sens=-85;
+  const fspl = 32.45 + 20*Math.log10(d) + 20*Math.log10(f);
+  const eirp = p + g - cable;
+  const rx = eirp + g - cable - fspl;          // outro lado: + ganho − cabo
+  const fade = rx - sens;
+  const fres = 17.32*Math.sqrt(d/(4*fGHz));     // raio da 1ª zona no meio (m)
+  const freePct = Math.min(100, Math.round(100*h/fres));
+  const eirpLimit = f>=11000 ? 55 : 36;         // 36 dBm não licenciada; licenciada coordenada
+  $('#r15tab').innerHTML = `<tr><th>Grandeza</th><th style="text-align:right">Valor</th></tr>
+    <tr><td>FSPL (perda no espaço livre)</td><td>${fspl.toFixed(1)} dB</td></tr>
+    <tr><td>EIRP (Tx + antena − cabo)</td><td>${eirp.toFixed(1)} dBm</td></tr>
+    <tr><td>Limite EIRP (Anatel)</td><td>${eirpLimit} dBm</td></tr>
+    <tr><td>Sinal recebido (Rx)</td><td>${rx.toFixed(1).replace('-','−')} dBm</td></tr>
+    <tr><td>Sensibilidade do rádio</td><td>−85 dBm</td></tr>
+    <tr><td><b>Margem de desvanecimento</b></td><td><b>${fade.toFixed(1).replace('-','−')} dB</b></td></tr>
+    <tr><td>Raio 1ª zona de Fresnel (meio)</td><td>${fres.toFixed(1)} m</td></tr>
+    <tr><td><b>Fresnel liberada</b></td><td><b>${freePct}%</b></td></tr>`;
+  let lines=[];
+  lines.push(eirp>eirpLimit ? '🚨 EIRP <span class="hl">acima do limite</span> da Anatel ('+eirpLimit+' dBm): reduza potência ou ganho.' : '✅ EIRP dentro do limite legal.');
+  lines.push(fade<0 ? '🚨 Enlace NÃO fecha: Rx abaixo da sensibilidade.' : fade<10 ? '🟡 Fecha, mas margem curta ('+fade.toFixed(1)+' dB) — cai na chuva/vento.' : '💚 Margem saudável ('+fade.toFixed(1)+' dB).');
+  lines.push(freePct<60 ? '🚨 Fresnel obstruída ('+freePct+'%): GANHE ALTURA — visada óptica não basta.' : '✅ Fresnel ≥ 60% liberada.');
+  $('#r15verdict').innerHTML = lines.join('<br>');
+  const goals=[
+    {k:'c1', t:'1) Feche o enlace com margem de desvanecimento ≥ 10 dB', ok: fade>=10},
+    {k:'c2', t:'2) Alcance ≥ 15 km mantendo a EIRP DENTRO do limite da Anatel e o enlace fechando', ok: d>=15 && eirp<=eirpLimit && fade>=0},
+    {k:'c3', t:'3) Garanta ≥ 60% da 1ª zona de Fresnel livre', ok: freePct>=60},
+  ];
+  goals.forEach(gg=>{ if(gg.ok && !m15[gg.k]){ m15[gg.k]=true; addXP(30);
+    fb($('#m15f'),'ok','✅ Desafio '+gg.t.charAt(0)+' cumprido! '+(
+      gg.k==='c1'?'Fade margin é a folga que a chuva, a vegetação e a interferência vão comer. ≥10–20 dB é o recomendado.':
+      gg.k==='c2'?'A EIRP é o que a Antel limita — antena maior aumenta EIRP e pode estourar o limite mesmo sem mexer no rádio. Distância grande exige ganho, mas com teto legal.':
+      'A perda por difração na borda obstruída derruba o sinal mesmo com visada limpa. Altura libera Fresnel melhor que potência bruta.'));
+  }});
+  $('#r15goals').innerHTML = goals.map(gg=>`<div class="choice ${m15[gg.k]?'right':''}" style="cursor:default">${m15[gg.k]?'✅ ':'⬜ '}${gg.t}</div>`).join('');
+  if(m15.c1&&m15.c2&&m15.c3&&!S.done.m15){
+    completeMission('m15');
+    $('#m15end').innerHTML = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Engenheiro de Rádio!</b> Subir a frequência dá banda mas reduz alcance e penetração; o ganho das antenas paga a FSPL gigante; a EIRP tem teto legal; e a maior causa de “cai no vento/chuva” é Fresnel obstruída, não falta de potência.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>`;
+  }
+}
+
+/* ============ M16: TOPOLOGIAS (física × lógica) ============ */
+let m16;
+const M16_SCEN = [
+  {ico:'🌳', t:'FTTH PON: OLT → splitter passivo → 32 ONTs', fis:'arvore', log:'pmp',
+   exp:'Fisicamente uma ÁRVORE (um tronco que se divide). Logicamente PONTO-MULTIPONTO: o downstream é broadcast (todas as ONTs ouvem; por isso o AES), o upstream é agendado por TDMA.'},
+  {ico:'⭐', t:'Switch de acesso com 24 PCs numa VLAN', fis:'estrela', log:'broadcast',
+   exp:'Fisicamente ESTRELA (cada PC num cabo até o switch). Logicamente um BARRAMENTO/domínio de broadcast: um quadro broadcast/desconhecido chega a todos da VLAN.'},
+  {ico:'💍', t:'Anel óptico metropolitano com ERPS', fis:'anel', log:'arvore',
+   exp:'Fisicamente um ANEL (redundância física). Logicamente vira ÁRVORE: o ERPS BLOQUEIA um enlace para quebrar o loop L2; no rompimento, libera-o e reconverge em <50 ms.'},
+  {ico:'📡', t:'Backhaul de rádio entre duas torres', fis:'p2p', log:'p2p',
+   exp:'PONTO-A-PONTO nas duas dimensões: um único vão dedicado entre dois rádios — física e lógica coincidem.'},
+];
+const M16_FIS = {estrela:'Estrela', arvore:'Árvore', anel:'Anel', p2p:'Ponto-a-ponto', barr:'Barramento'};
+const M16_LOG = {broadcast:'Barramento / broadcast', pmp:'Ponto-multiponto', p2p:'Ponto-a-ponto', arvore:'Árvore (1 enlace bloqueado)'};
+function initM16(){
+  m16 = {hits:0, done:Array(M16_SCEN.length).fill(false)};
+  m16Draw();
+}
+function m16Draw(){
+  const selF = id => `<select id="${id}" class="lab-sel" style="margin-top:4px">`+Object.entries(M16_FIS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')+`</select>`;
+  const selL = id => `<select id="${id}" class="lab-sel" style="margin-top:4px">`+Object.entries(M16_LOG).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')+`</select>`;
+  $('#m16stage').innerHTML = `
+  <p style="margin-top:12px;font-size:.85rem;color:var(--ink-soft)">Para cada cenário, classifique a topologia <b>física</b> (como o cabo liga) e a <b>lógica</b> (como os dados fluem). Acerte <b>3 dos 4</b> para o badge.</p>
+  <div style="display:grid;gap:14px;margin-top:14px">
+    ${M16_SCEN.map((s,i)=>`<div class="contract" style="margin-top:0" id="m16card${i}">
+      <h4>${s.ico} Cenário ${i+1}</h4>
+      <p style="font-size:.86rem;margin:4px 0 8px">${s.t}</p>
+      <div class="osi-cols" style="margin-top:0">
+        <label style="font-size:.8rem">Física:${selF('m16f'+i)}</label>
+        <label style="font-size:.8rem">Lógica:${selL('m16l'+i)}</label>
+      </div>
+    </div>`).join('')}
+  </div>
+  <button class="btn gold" id="b16go" style="margin-top:14px">✓ Verificar classificações</button>
+  <div class="feedback" id="m16f"></div>
+  <div id="m16end"></div>`;
+  $('#b16go').onclick = m16Check;
+}
+function m16Check(e){
+  let hits=0, detail=[];
+  M16_SCEN.forEach((s,i)=>{
+    const fOk = $('#m16f'+i).value===s.fis, lOk = $('#m16l'+i).value===s.log;
+    const ok = fOk && lOk;
+    if(ok) hits++;
+    $('#m16card'+i).style.borderColor = ok?'var(--apc)':'var(--alarm)';
+    detail.push(`<b>Cenário ${i+1}:</b> ${ok?'✅':'❌'} ${s.exp}`);
+  });
+  m16.hits=hits;
+  if(hits>=3){
+    if(!S.done.m16){ addXP(40,e); completeMission('m16'); }
+    fb($('#m16f'),'ok','✅ <b>'+hits+'/4 corretos!</b><br>'+detail.join('<br>'));
+    $('#m16end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Arquiteto de Redes!</b> A regra que confunde todo iniciante: topologia física ≠ lógica. Árvore PON é broadcast lógico; estrela de switch é barramento lógico; anel com ERPS é árvore lógica. Saber disso evita diagnósticos errados.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>`;
+  } else {
+    fb($('#m16f'),'bad','❌ Só '+hits+'/4. Reveja os marcados em vermelho e tente de novo.<br>'+detail.join('<br>'));
+  }
+}
+
+/* ============ M17: MPLS (push/swap/pop) ============ */
+let m17;
+const M17_NODES = [
+  {n:'CE-A', r:'Cliente', act:null},
+  {n:'PE1', r:'Ingress (LER)', act:'push', from:null, to:16, hint:'É a entrada no núcleo MPLS: aqui o rótulo é EMPILHADO.'},
+  {n:'P1', r:'Core (LSR)', act:'swap', from:16, to:22, hint:'Roteador de núcleo: NÃO olha o IP, só troca o rótulo.'},
+  {n:'P2', r:'Core (LSR)', act:'swap', from:22, to:30, hint:'Outro LSR: mesma lógica, swap pelo rótulo.'},
+  {n:'PE2', r:'Egress (LER)', act:'pop', from:30, to:null, hint:'Saída do núcleo: rótulo REMOVIDO, entrega por IP.'},
+  {n:'CE-B', r:'Cliente', act:null},
+];
+function initM17(){
+  m17 = {idx:1, label:null, finished:false};
+  m17Draw();
+}
+function m17Draw(){
+  const track = M17_NODES.map((nd,i)=>{
+    const cls = i===m17.idx?'cur':(i<m17.idx?'done':'');
+    return `<div class="mpls-node ${cls}"><b>${nd.n}</b><small>${nd.r}</small></div>`+(i<M17_NODES.length-1?'<span class="mpls-arrow">→</span>':'');
+  }).join('');
+  const stack = m17.label!==null ? `<div class="lblchip">rótulo ${m17.label}</div>` : '<span style="font-size:.72rem;color:var(--ink-soft)">pilha vazia (pacote IP puro)</span>';
+  let panel='';
+  if(m17.finished){
+    panel = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Comutador de Rótulos!</b> Push → Swap → Swap → Pop ao longo do LSP. O PE de entrada empilha, os P comutam só pelo rótulo (sem consultar a tabela IP cheia), o PE de saída remove e entrega. Rótulos empilhados = um para o caminho, outro para o serviço (L3VPN/VPLS). É o que dá FRR <50 ms ao core.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="initM17()">↺ Refazer</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+  } else {
+    const nd = M17_NODES[m17.idx];
+    const opts = [
+      {k:'push', txt:'PUSH — empilhar um rótulo novo'},
+      {k:'swap', txt:'SWAP — trocar o rótulo atual por outro'},
+      {k:'pop', txt:'POP — remover o rótulo e entregar por IP'},
+      {k:'ip', txt:'Rotear consultando a tabela IP de destino (como roteador comum)'},
+    ];
+    panel = `<p style="margin-top:14px;font-size:.86rem">Pacote chegou em <b>${nd.n}</b> (${nd.r}). Qual a ação MPLS correta aqui?</p>
+    <div class="choices" id="b17opts" style="margin-top:8px">${opts.map(o=>`<button class="choice" data-k="${o.k}">${o.txt}</button>`).join('')}</div>`;
+  }
+  $('#m17stage').innerHTML = `
+  <div class="mpls-track">${track}</div>
+  <div style="text-align:center;margin-top:14px"><div class="lbl" style="font-size:.7rem;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase">Pilha de rótulos no pacote</div><div class="labelstack">${stack}</div></div>
+  <div id="b17panel">${panel}</div>
+  <div class="feedback" id="m17f"></div>`;
+  if(!m17.finished){
+    $('#b17opts').querySelectorAll('.choice').forEach(c=>{
+      c.onclick = e => m17Act(c.dataset.k, e);
+    });
+  }
+}
+function m17Act(k, e){
+  const nd = M17_NODES[m17.idx];
+  if(k!==nd.act){
+    const why = k==='ip' && (nd.act==='swap') ? 'No núcleo MPLS o P NÃO consulta a tabela IP — é exatamente o ganho do MPLS: comutar só pelo rótulo.' :
+      'Ação errada para este salto. '+nd.hint;
+    fb($('#m17f'),'bad','❌ '+why);
+    return;
+  }
+  // aplica
+  if(k==='push') m17.label = nd.to;
+  else if(k==='swap') m17.label = nd.to;
+  else if(k==='pop') m17.label = null;
+  addXP(15,e);
+  fb($('#m17f'),'ok','✅ '+nd.n+': '+k.toUpperCase()+(nd.to!==null&&nd.to!==undefined&&k!=='pop'?' → rótulo '+nd.to:'')+'. '+nd.hint);
+  // avança para o próximo nó que exige ação (PE2 é último com ação)
+  m17.idx++;
+  // pula nós sem ação (CE-B final)
+  while(m17.idx<M17_NODES.length && M17_NODES[m17.idx].act===null && m17.idx<M17_NODES.length-1) m17.idx++;
+  if(M17_NODES[m17.idx] && M17_NODES[m17.idx].act===null){
+    // chegou no CE-B
+    m17.finished=true; m17.idx=M17_NODES.length-1;
+    if(!S.done.m17) completeMission('m17');
+  }
+  m17Draw();
+}
+
+/* ============ helpers de IP (m18/m19) ============ */
+function ip2int(ip){ return ip.split('.').reduce((a,o)=>((a<<8)>>>0)+(+o),0)>>>0; }
+function maskInt(p){ return p===0?0:((0xFFFFFFFF<<(32-p))>>>0); }
+function int2ip(n){ return [n>>>24&255, n>>>16&255, n>>>8&255, n&255].join('.'); }
+function ipInNet(ip, net, p){ const m=maskInt(p); return ((ip2int(ip)&m)>>>0) === ((ip2int(net)&m)>>>0); }
+
+/* ============ M18: ROTEAMENTO (longest-prefix match) ============ */
+let m18;
+const M18_TABLE = [
+  {net:'10.20.5.0',   p:24, via:'Switch Bairro 5'},
+  {net:'10.20.0.0',   p:16, via:'POP Centro'},
+  {net:'10.0.0.0',    p:8,  via:'Roteador Núcleo'},
+  {net:'100.64.0.0',  p:10, via:'Gateway CGNAT'},
+  {net:'192.168.0.0', p:22, via:'Bloco corporativo (sumarizado)'},
+  {net:'0.0.0.0',     p:0,  via:'Trânsito (default)'},
+];
+const M18_PKTS = ['10.20.5.130','10.20.40.9','10.99.1.1','100.64.7.20','192.168.2.50','8.8.8.8'];
+function m18Winner(dest){
+  let best=-1, bi=-1;
+  M18_TABLE.forEach((r,i)=>{ if(ipInNet(dest,r.net,r.p) && r.p>best){ best=r.p; bi=i; } });
+  return bi;
+}
+function initM18(){
+  m18 = {round:0, hits:0};
+  m18Round();
+}
+function m18Round(){
+  const dest = M18_PKTS[m18.round];
+  const rows = M18_TABLE.map((r,i)=>`<tr class="rt-row" data-i="${i}"><td class="mono">${r.net}/${r.p}</td><td>${r.via}</td></tr>`).join('');
+  $('#m18stage').innerHTML = `
+  <div class="progress-steps">${M18_PKTS.map((_,i)=>`<i class="${i<m18.round?'done':i===m18.round?'cur':''}"></i>`).join('')}</div>
+  <div class="contract" style="max-width:460px"><h4>📦 Pacote ${m18.round+1} de ${M18_PKTS.length}</h4>
+    <p style="font-size:.82rem;margin-top:4px">Destino: <b class="mono" style="font-size:1.1rem">${dest}</b></p>
+    <p style="font-size:.78rem;color:var(--ink-soft);margin-top:4px">Toque na rota que o roteador vai usar.</p>
+  </div>
+  <table class="result-table" style="max-width:520px;margin-top:14px"><tr><th>Rota (rede/prefixo)</th><th>Próximo salto</th></tr>${rows}</table>
+  <div class="feedback" id="m18f"></div><div id="m18end"></div>`;
+  const win = m18Winner(dest);
+  $('#m18stage').querySelectorAll('.rt-row').forEach(tr=>{
+    tr.onclick = e=>{
+      if(tr.dataset.locked) return;
+      $('#m18stage').querySelectorAll('.rt-row').forEach(x=>x.dataset.locked='1');
+      const i=+tr.dataset.i, r=M18_TABLE[i], w=M18_TABLE[win];
+      if(i===win){
+        tr.classList.add('win'); addXP(20,e); m18.hits++;
+        fb($('#m18f'),'ok',`✅ Correto! <span class="mono">${dest}</span> casa com <b>${w.net}/${w.p}</b> (e talvez outras), mas /${w.p} é o prefixo mais longo → vence. Próximo salto: <b>${w.via}</b>.`);
+        if(m18.round < M18_PKTS.length-1){ m18.round++; setTimeout(m18Round, 1100); }
+        else {
+          completeMission('m18');
+          $('#m18end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Roteador Mestre!</b> Longest-prefix match é a alma do roteamento: rotas mais específicas vencem as mais genéricas, e a default 0.0.0.0/0 é a última a ser considerada. É também por isso que um /24 mais específico "sequestra" tráfego num route hijack — e por que a sumarização (juntar /24 em /22) encolhe a tabela sem perder alcance.</div>
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m19')">🧮 Lab VLSM →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+        }
+      } else {
+        tr.classList.add('lose'); $('#m18stage').querySelector('.rt-row[data-i="'+win+'"]').classList.add('win');
+        fb($('#m18f'),'bad',`❌ Essa não. Você escolheu <b>${r.net}/${r.p}</b>, mas existe um prefixo MAIS específico que também casa: <b>${M18_TABLE[win].net}/${M18_TABLE[win].p}</b> (/${M18_TABLE[win].p} &gt; /${r.p}). Toque em "tentar de novo".`);
+        const b=document.createElement('button'); b.className='btn ghost'; b.style.marginTop='10px'; b.textContent='↺ Tentar este pacote de novo';
+        b.onclick=()=>m18Round(); $('#m18f').appendChild(b);
+      }
+    };
+  });
+}
+
+/* ============ M19: VLSM ============ */
+let m19;
+const M19_BASE = {ip:'192.168.10.0', p:24};
+const M19_REQS = [
+  {n:'Vendas', hosts:50, p:26},
+  {n:'Financeiro', hosts:25, p:27},
+  {n:'Wi-Fi visitantes', hosts:10, p:28},
+  {n:'Servidores', hosts:5, p:29},
+  {n:'Link p/ roteador', hosts:2, p:30},
+];
+function initM19(){
+  m19 = {};
+  const opts = `<option value="">—</option>`+[25,26,27,28,29,30].map(p=>`<option value="${p}">/${p} (${Math.pow(2,32-p)-2} hosts)</option>`).join('');
+  $('#m19stage').innerHTML = `
+  <div class="contract" style="max-width:none;margin-top:14px"><h4>📐 Necessidades (já ordenadas do maior para o menor)</h4>
+    <div style="display:grid;gap:10px;margin-top:8px">
+      ${M19_REQS.map((r,i)=>`<div class="numrow" style="margin:0;align-items:center">
+        <span style="flex:1;font-size:.86rem"><b>${r.n}</b> — precisa de <b class="mono">${r.hosts}</b> hosts</span>
+        <select id="v19_${i}" class="lab-sel" style="width:170px">${opts}</select></div>`).join('')}
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn gold" id="b19go">✓ Verificar e alocar</button>
+    <button class="btn ghost" id="b19hint">💡 Como escolher o prefixo</button>
+  </div>
+  <div class="feedback" id="m19f"></div>
+  <table class="result-table" id="m19map" style="margin-top:14px"></table>
+  <div id="m19end"></div>`;
+  $('#b19hint').onclick = ()=> fb($('#m19f'),'info','💡 Escolha o <b>menor</b> bloco cujo total de hosts (2^(32−prefixo) − 2) ainda seja ≥ a necessidade. Ex.: 50 hosts → /26 dá 62 (cabe), /27 dá 30 (não cabe). Depois alocamos do maior para o menor, em blocos alinhados, sem buracos.');
+  $('#b19go').onclick = m19Check;
+}
+function m19Check(e){
+  const chosen = M19_REQS.map((r,i)=> $('#v19_'+i).value ? +$('#v19_'+i).value : null);
+  if(chosen.some(v=>v===null)){ fb($('#m19f'),'bad','❌ Defina o prefixo de todos os 5 setores.'); return; }
+  const wrong = [];
+  M19_REQS.forEach((r,i)=>{ if(chosen[i]!==r.p) wrong.push(r.n); });
+  if(wrong.length){
+    fb($('#m19f'),'bad','❌ Prefixo errado em: <b>'+wrong.join(', ')+'</b>. Lembre: o menor bloco que ainda cabe (hosts úteis = 2^(32−p) − 2). Use a dica.');
+    return;
+  }
+  // aloca do maior para o menor a partir do início do bloco
+  let cur = ip2int(M19_BASE.ip);
+  const rows = M19_REQS.map((r,i)=>{
+    const size = Math.pow(2,32-r.p);
+    const net = int2ip(cur), bc = int2ip(cur+size-1), first=int2ip(cur+1), last=int2ip(cur+size-2);
+    cur += size;
+    return `<tr><td><b>${r.n}</b></td><td class="mono">${net}/${r.p}</td><td class="mono">${first}–${last}</td><td class="mono">${bc}</td></tr>`;
+  }).join('');
+  const used = cur - ip2int(M19_BASE.ip), total = 256;
+  $('#m19map').innerHTML = `<tr><th>Setor</th><th>Rede</th><th>Hosts úteis</th><th>Broadcast</th></tr>${rows}
+    <tr><td colspan="4" style="text-align:right;color:var(--ink-soft)">Usado: ${used}/${total} endereços · sobra: ${total-used} (livre p/ futuro)</td></tr>`;
+  if(!S.done.m19){ addXP(45,e); completeMission('m19'); }
+  fb($('#m19f'),'ok','✅ Perfeito! Blocos alinhados, do maior para o menor, sem sobreposição.');
+  $('#m19end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Planejador IP!</b> Essa é a habilidade que monta pools de PPPoE, recortes de CGNAT (100.64.0.0/10), /30 de transporte e VLANs de gerência. Começar pelos blocos pequenos fragmenta o espaço e o bloco grande "não cabe mais" — por isso: <b>maior primeiro, sempre</b>, e registre tudo no IPAM.</div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m20')">📨 Lab DHCP →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+}
+
+/* ============ M20: DHCP DORA ============ */
+let m20;
+const M20_STEPS = [
+  {tag:'D · Discover', q:'O cliente acabou de ligar e NÃO tem IP. Como ele manda o Discover?',
+   opts:[['Em broadcast (255.255.255.255) — ele ainda não conhece nenhum servidor',1],['Em unicast direto ao servidor DHCP',0],['Por DNS, perguntando o IP do servidor',0]],
+   exp:'Sem IP e sem saber quem é o servidor, só resta gritar para todos: broadcast. É por isso que existe o DHCP Relay — para esse broadcast alcançar o servidor central através das VLANs.'},
+  {tag:'Relay · Opção 82', q:'O Discover chega no DHCP Relay (na OLT/switch). O que ele faz antes de encaminhar?',
+   opts:[['Carimba a Opção 82 com a porta/circuito físico de origem e manda em unicast ao servidor',1],['Responde ele mesmo com um IP qualquer',0],['Descarta, pois broadcast não cruza VLAN',0]],
+   exp:'A Opção 82 identifica DE ONDE veio o pedido (porta/VLAN/circuito). Com DHCP Snooping + DAI, é o que mata IP/ARP spoofing no acesso e dá rastreabilidade legal.'},
+  {tag:'O · Offer', q:'O servidor recebe o pedido carimbado. Qual a resposta?',
+   opts:[['Oferece (Offer) um IP livre do pool, devolvendo pelo relay',1],['Já cobra a fatura do cliente',0],['Pergunta a senha do PPPoE',0]],
+   exp:'O Offer carrega um IP candidato, máscara, gateway, DNS e tempo de lease. Pode haver mais de um servidor ofertando.'},
+  {tag:'R · Request', q:'O cliente recebe a oferta. Próximo passo?',
+   opts:[['Envia Request (em broadcast) ESCOLHENDO formalmente uma oferta',1],['Já começa a navegar com o IP ofertado',0],['Reinicia para aplicar o IP',0]],
+   exp:'O Request é broadcast de propósito: avisa o servidor escolhido e, de quebra, informa os outros servidores que suas ofertas podem ser liberadas.'},
+  {tag:'A · Ack', q:'Para fechar o aperto de mão, o servidor responde com…',
+   opts:[['Ack: confirma o IP e entrega o lease (com tempo de validade)',1],['Nack sempre, por segurança',0],['Um novo Discover',0]],
+   exp:'Com o Ack + lease o cliente finalmente usa o IP. Antes do lease vencer ele renova (geralmente em unicast direto ao servidor). DORA completo!'},
+];
+function initM20(){ m20={step:0}; m20Draw(); }
+function m20Draw(){
+  if(m20.step>=M20_STEPS.length){
+    completeMission('m20');
+    $('#m20stage').innerHTML = `<div class="feedback show ok" style="display:block">🏅 <b>Badge: Mestre do DHCP!</b> DORA = Discover (broadcast) → Offer → Request (broadcast) → Ack+lease. O Relay com Opção 82 é o que torna o IPoE rastreável e anti-fraude no provedor — e o DHCP Snooping na borda barra servidores DHCP piratas.</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m21')">📺 Lab IPTV →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+    return;
+  }
+  const s = M20_STEPS[m20.step];
+  $('#m20stage').innerHTML = `
+  <div class="progress-steps">${M20_STEPS.map((_,i)=>`<i class="${i<m20.step?'done':i===m20.step?'cur':''}"></i>`).join('')}</div>
+  <div class="mpls-track">${M20_STEPS.map((st,i)=>`<div class="mpls-node ${i<m20.step?'done':i===m20.step?'cur':''}"><b>${st.tag.split(' ')[0]}</b></div>`+(i<M20_STEPS.length-1?'<span class="mpls-arrow">→</span>':'')).join('')}</div>
+  <div class="contract" style="margin-top:14px"><h4>${s.tag}</h4><p style="font-size:.88rem;margin-top:6px">${s.q}</p></div>
+  <div class="choices" id="m20opts" style="margin-top:10px">${s.opts.map((o,i)=>`<button class="choice" data-ok="${o[1]}">${o[0]}</button>`).join('')}</div>
+  <div class="feedback" id="m20f"></div>`;
+  $('#m20opts').querySelectorAll('.choice').forEach(c=>{
+    c.onclick=e=>{ const wrap=$('#m20opts'); if(wrap.dataset.done) return;
+      if(c.dataset.ok==='1'){ wrap.dataset.done='1'; lockChoices(wrap,c,true); wrap.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+        addXP(15,e); fb($('#m20f'),'ok','✅ '+s.exp);
+        const b=document.createElement('button'); b.className='btn gold'; b.style.marginTop='12px';
+        b.textContent = m20.step<M20_STEPS.length-1?'Próximo passo →':'Concluir DORA →';
+        b.onclick=()=>{ m20.step++; m20Draw(); }; $('#m20f').appendChild(b);
+      } else { c.classList.add('wrong'); fb($('#m20f'),'bad','❌ Não é essa. Pense no que o cliente/relay/servidor sabe nesse momento.'); }
+    };
+  });
+}
+
+/* ============ M21: IPTV / MULTICAST / IGMP ============ */
+let m21;
+function initM21(){
+  m21 = {join:[true,false,true,false], snoop:true, done:false, asked:false};
+  m21Draw();
+}
+function m21Draw(){
+  $('#m21stage').innerHTML = `
+  <div class="toggle-row" style="margin-top:14px"><input type="checkbox" id="b21snoop" ${m21.snoop?'checked':''}> <b>IGMP snooping ligado no switch</b></div>
+  <div class="iptv-ports" id="b21ports"></div>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn gold" id="b21tx">▶ Transmitir canal 239.1.1.10</button>
+    <button class="btn ghost" id="b21reset">↺ Limpar</button>
+  </div>
+  <div id="b21stat" style="margin-top:12px;font-size:.85rem;font-family:'IBM Plex Mono'"></div>
+  <div id="b21quiz" style="margin-top:14px"></div>
+  <div class="feedback" id="m21f"></div>
+  <div id="m21end"></div>`;
+  m21Ports();
+  $('#b21snoop').onchange = ()=>{ m21.snoop=$('#b21snoop').checked; m21Ports(); $('#b21stat').innerHTML=''; };
+  $('#b21tx').onclick = m21Tx;
+  $('#b21reset').onclick = ()=>{ m21Ports(); $('#b21stat').innerHTML=''; };
+}
+function m21Ports(){
+  $('#b21ports').innerHTML = m21.join.map((j,i)=>`<div class="iptv-port" id="b21p${i}"><div>🖥️ Cliente ${i+1}</div><label><input type="checkbox" data-i="${i}" ${j?'checked':''}> deu join</label></div>`).join('');
+  $('#b21ports').querySelectorAll('input').forEach(c=>{ c.onchange=()=>{ m21.join[+c.dataset.i]=c.checked; $('#b21stat').innerHTML=''; m21Ports(); }; });
+}
+function m21Tx(){
+  const recv = m21.snoop ? m21.join.slice() : [true,true,true,true];
+  m21.join.forEach((j,i)=>{
+    const el=$('#b21p'+i); el.classList.remove('recv','flood');
+    if(recv[i]) el.classList.add(m21.snoop?'recv':'flood');
+  });
+  const got = recv.filter(Boolean).length, wanted = m21.join.filter(Boolean).length;
+  if(m21.snoop){
+    $('#b21stat').innerHTML = `✅ Snooping ON: o canal chegou a <b>${got}</b> porta(s) — exatamente quem deu join. As demais ficam livres.`;
+    if(wanted>0 && !m21.asked) m21Quiz();
+  } else {
+    const waste = got - wanted;
+    $('#b21stat').innerHTML = `🚨 Snooping OFF: o multicast virou <b>broadcast</b> e inundou <b>todas as ${got}</b> portas — <b>${waste}</b> recebendo um canal que ninguém pediu. Multiplique por dezenas de canais e o acesso afoga.`;
+  }
+}
+function m21Quiz(){
+  m21.asked=true;
+  $('#b21quiz').innerHTML = `<h3 class="disp">🧠 Fixando</h3>
+  <p style="font-size:.85rem">Por que o IGMP snooping é essencial na rede de acesso com IPTV?</p>
+  <div class="choices" id="b21opts" style="margin-top:8px">
+    <button class="choice" data-ok="0">Ele comprime o vídeo para gastar menos banda</button>
+    <button class="choice" data-ok="1">Sem ele, cada canal vira broadcast e inunda TODAS as portas, afogando o acesso; com ele, o canal vai só às portas que deram join</button>
+    <button class="choice" data-ok="0">Ele criptografa o canal de IPTV ponta a ponta</button>
+  </div>`;
+  $('#b21opts').querySelectorAll('.choice').forEach(c=>{
+    c.onclick=e=>{ const wrap=$('#b21opts'); if(m21.done) return;
+      if(c.dataset.ok==='1'){ m21.done=true; lockChoices(wrap,c,true); wrap.querySelectorAll('.choice').forEach(x=>x.style.pointerEvents='none');
+        addXP(40,e); completeMission('m21');
+        fb($('#m21f'),'ok','✅ Isso! A fonte manda UMA cópia; a rede replica só onde há join. IGMP no acesso, PIM-SM no core, grupos em 239.0.0.0/8 (interno). Não esqueça de configurar o querier no switch.');
+        $('#m21end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Operador de IPTV!</b> 3 ou 3000 espectadores não mudam o tronco — o multicast replica sob demanda. E é por isso que IPoE combina melhor com IPTV que PPPoE: o túnel PPPoE é unicast e atrapalha a replicação.</div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" onclick="openMission('m22')">🛜 Lab Wi-Fi →</button><button class="btn ghost" onclick="goMap()">Mapa</button></div>`;
+      } else { c.classList.add('wrong'); fb($('#m21f'),'bad','❌ Não. O snooping não mexe no vídeo nem cifra nada — ele controla EM QUAIS PORTAS o canal é entregue.'); }
+    };
+  });
+}
+
+/* ============ M22: WI-FI 1/6/11 ============ */
+let m22;
+function initM22(){
+  m22 = {ch:[1,1,1,1], done:false};
+  $('#m22stage').innerHTML = `
+  <div class="wifi-row" id="b22row"></div>
+  <div class="wifi-row" style="margin-top:4px"><div class="wifi-link">A↔B</div><div class="wifi-link">B↔C</div><div class="wifi-link">C↔D</div><div></div></div>
+  <div id="b22stat" style="margin-top:14px;font-size:.9rem;font-weight:600"></div>
+  <div class="kfact" style="margin-top:12px">Cada canal de 2,4 GHz ocupa ~22 MHz e os canais distam só 5 MHz: dois APs com canais a menos de 5 de distância (ex.: 4 e 6) se sobrepõem e interferem. Por isso o padrão de ouro é <b>1, 6 e 11</b> (distam ≥5). Em 5 GHz há muito mais canais sem sobreposição — outro motivo para preferi-lo.</div>
+  <div class="feedback" id="m22f"></div>
+  <div id="m22end"></div>`;
+  m22Draw();
+}
+function m22Draw(){
+  const chans=[1,2,3,4,5,6,7,8,9,10,11];
+  $('#b22row').innerHTML = m22.ch.map((c,i)=>`<div class="wifi-ap" id="b22ap${i}"><b>📶 AP ${'ABCD'[i]}</b><div style="margin-top:8px"><select id="b22sel${i}" class="lab-sel">${chans.map(ch=>`<option value="${ch}" ${ch===c?'selected':''}>Canal ${ch}</option>`).join('')}</select></div></div>`).join('');
+  m22.ch.forEach((c,i)=>{ $('#b22sel'+i).onchange = ()=>{ m22.ch[i]=+$('#b22sel'+i).value; m22Eval(); }; });
+  m22Eval();
+}
+function m22Eval(){
+  // pares adjacentes: 0-1,1-2,2-3
+  let clashes=0; const clash=[false,false,false,false];
+  [[0,1],[1,2],[2,3]].forEach(([a,b])=>{ if(Math.abs(m22.ch[a]-m22.ch[b])<5){ clashes++; clash[a]=true; clash[b]=true; } });
+  m22.ch.forEach((c,i)=>{ const el=$('#b22ap'+i); el.classList.toggle('clash',clash[i]); el.classList.toggle('clean',!clash[i]); });
+  const allSame = m22.ch.every(c=>c===m22.ch[0]);
+  if(clashes===0 && !allSame){
+    $('#b22stat').innerHTML = '<span style="color:var(--apc)">✅ Interferência zero!</span> Vizinhos com canais distantes ≥5 (padrão 1/6/11).';
+    if(!m22.done){ m22.done=true; addXP(45); completeMission('m22');
+      $('#m22end').innerHTML = `<div class="feedback show ok" style="display:block;margin-top:12px">🏅 <b>Badge: Domador do Wi-Fi!</b> 1, 6 e 11 são os únicos canais que não se sobrepõem em 2,4 GHz — o "automático" que cai em 3 ou 9 soma interferência de DOIS vizinhos. Lembre também: PHY rate ≠ vazão (o ar é compartilhado por CSMA/CA), e casa grande pede mesh com backhaul cabeado, não repetidor.</div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" onclick="goMap()">← Mapa</button></div>`;
+    }
+  } else if(allSame){
+    $('#b22stat').innerHTML = '<span style="color:#8a6a00">🟡 Todos no mesmo canal:</span> sem sobreposição parcial, mas todos disputam o MESMO meio (colisão total). Distribua em 1/6/11.';
+  } else {
+    $('#b22stat').innerHTML = `<span style="color:var(--alarm)">🚨 ${clashes} par(es) interferindo.</span> Aproxime-se do padrão 1 / 6 / 11 nos vizinhos.`;
+  }
+}
+
 /* ============ boot ============ */
+loadState();
+$('#xpVal').textContent = S.xp;
 renderBadgesMini();
 renderMap();
 </script>
