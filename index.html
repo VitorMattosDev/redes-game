@@ -661,12 +661,13 @@ const S = {
   badges: {m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,m8:false,m9:false,m10:false,m11:false,m12:false,m13:false,m14:false,m15:false,m16:false,m17:false,m18:false,m19:false,m20:false,m21:false,m22:false,exam:false},
   ontRx: -13.4,
   plan: null,
+  missionXP: {}, // teto vitalício de XP já concedido por missão (evita XP duplicado ao refazer)
 };
 
 /* ============ PERSISTÊNCIA (localStorage) ============ */
 const SAVE_KEY = 'operacao-fibra-v1';
 function saveState(){
-  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({xp:S.xp, done:S.done, badges:S.badges, scores:(typeof E!=='undefined'?E.scores:{})})); }catch(e){}
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({xp:S.xp, done:S.done, badges:S.badges, missionXP:S.missionXP, scores:(typeof E!=='undefined'?E.scores:{})})); }catch(e){}
 }
 function loadState(){
   try{
@@ -675,6 +676,7 @@ function loadState(){
     if(typeof d.xp==='number') S.xp = d.xp;
     if(d.done) Object.keys(S.done).forEach(k=>{ if(k in d.done) S.done[k]=!!d.done[k]; });
     if(d.badges) Object.keys(S.badges).forEach(k=>{ if(k in d.badges) S.badges[k]=!!d.badges[k]; });
+    if(d.missionXP && typeof d.missionXP==='object') S.missionXP = d.missionXP;
     if(d.scores && typeof E!=='undefined') E.scores = d.scores;
   }catch(e){}
 }
@@ -730,8 +732,26 @@ const MISSIONS = [
 
 /* ============ UTIL ============ */
 const $ = s => document.querySelector(s);
+let xpSessMission = null; // missão da sessão atual de jogo
+let xpSessTotal = 0;      // XP acumulado nesta jogada (para comparar com o teto vitalício)
 function addXP(n, ev){
-  S.xp += n; $('#xpVal').textContent = S.xp; saveState();
+  // Se estamos dentro de uma missão (tela scr-mN), cada missão só concede XP até o máximo
+  // já alcançado em jogadas anteriores. Assim, refazer passos — com ou sem reload, antes ou
+  // depois de concluir — não gera XP duplicado, mas continua jogável para revisão.
+  const active = document.querySelector('.screen.active');
+  const mid = active ? (active.id.match(/^scr-(m\d+)$/)||[])[1] : null;
+  let credit = n;
+  if(mid){
+    if(mid !== xpSessMission){ xpSessMission = mid; xpSessTotal = 0; }
+    if(!S.missionXP) S.missionXP = {};
+    const prevMax = S.missionXP[mid] || 0;
+    xpSessTotal += n;
+    credit = Math.max(0, xpSessTotal - prevMax);
+    if(xpSessTotal > prevMax) S.missionXP[mid] = xpSessTotal;
+  }
+  if(credit <= 0){ saveState(); return; } // modo revisão: nada novo a ganhar, sem animação
+  S.xp += credit; $('#xpVal').textContent = S.xp; saveState();
+  n = credit;
   const f = document.createElement('div');
   f.className = 'xp-float'; f.textContent = '+'+n+' XP';
   const x = (ev && ev.clientX) ? ev.clientX : window.innerWidth/2;
@@ -751,8 +771,10 @@ function renderBadgesMini(){
     `<div class="badge-dot ${S.badges[b.id]?'won':''}" title="${b.name}">${b.ico}</div>`).join('');
 }
 function completeMission(id){
-  if(!S.done[id]){ S.done[id]=true; S.badges[id]=true; renderBadgesMini(); saveState(); }
-  if(Object.values(S.done).every(v=>v)){ setTimeout(()=>show('scr-cert'),600); renderCert(); }
+  const firstTime = !S.done[id];
+  if(firstTime){ S.done[id]=true; S.badges[id]=true; renderBadgesMini(); saveState(); }
+  // Só abre o certificado na conclusão genuína da última missão — refazer para revisar não reabre.
+  if(firstTime && Object.values(S.done).every(v=>v)){ setTimeout(()=>show('scr-cert'),600); renderCert(); }
 }
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -762,6 +784,7 @@ function goMap(){ renderMap(); show('scr-map'); }
 function openMission(id){
   const m = MISSIONS.find(x=>x.id===id);
   if(m.req && !S.done[m.req]) return;
+  xpSessMission = id; xpSessTotal = 0; // nova sessão de jogo desta missão (refazer não duplica XP)
   if(id==='m1') initM1();
   if(id==='m2') initM2();
   if(id==='m3') initM3();
